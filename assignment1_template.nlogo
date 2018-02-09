@@ -41,10 +41,8 @@ vacuums-own [beliefs desire intention]
 
 ; --- Setup ---
 to setup
-  clear-all
   set time 0
   ask vacuums [set beliefs n-values 10 [list (random 10) (random 10)]]
-  ask vacuums [show beliefs]
   setup-patches
   setup-vacuums
   setup-ticks
@@ -66,13 +64,13 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
+
 end
 
 
 ; --- Setup vacuums ---
 to setup-vacuums
   ; In this method you may create the vacuum cleaner agents (in this case, there is only 1 vacuum cleaner agent).
-  create-vacuums 1
 end
 
 
@@ -112,13 +110,13 @@ to execute-actions
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-781
-10
-1296
-546
+782
+17
+1382
+638
 12
 12
-20.24
+23.6
 1
 10
 1
@@ -147,7 +145,7 @@ dirt_pct
 dirt_pct
 0
 100
-15
+0
 1
 1
 NIL
@@ -650,7 +648,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.3.1
+NetLogo 5.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
