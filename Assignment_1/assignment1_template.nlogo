@@ -42,12 +42,19 @@ vacuums-own [beliefs desire intention]
 
 ; --- Setup ---
 to setup
+  clear-all
   set time 0
   setup-patches
   setup-vacuums
   setup-ticks
   ; set beliefs
   ask vacuums [set beliefs n-values (dirt_pct / 100 * count patches) [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
+  ask vacuums [show beliefs]
+    ask vacuums [show item 0 beliefs]
+
+  ask vacuums[ let belief item 0 beliefs let x item 0 belief show x let y item 1 belief show y facexy x y]
+
+
 end
 
 
@@ -66,7 +73,6 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
-  clear-all
   ask n-of (dirt_pct / 100 * count patches) patches [ set pcolor brown ]
 
 
@@ -124,7 +130,14 @@ end
 ; --- Execute actions ---
 to execute-actions
   ; Here you should put the code related to the actions performed by your agent: moving and cleaning (and in Assignment 1.3, throwing away dirt).
+  ;ask vacuum [show item 2 beliefs]
+  ask vacuums [show item 0 beliefs]
+    ask vacuums [show beliefs]
+   ;ask vacuums[ let belief item 0 beliefs let x item 0 belief show x]
+   ;let temp ask vacuums [item 0 beliefs]
+   ;show temp
    ;facexy x y t
+   ask vacuums[ let belief item 0 beliefs let x item 0 belief show x let y item 1 belief show y facexy x y]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
