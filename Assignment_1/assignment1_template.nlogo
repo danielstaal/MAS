@@ -39,12 +39,15 @@ breed [vacuums vacuum]
 vacuums-own [beliefs desire intention]
 
 
+
 ; --- Setup ---
 to setup
   set time 0
   setup-patches
   setup-vacuums
   setup-ticks
+  ; set beliefs
+  ask vacuums [set beliefs n-values (dirt_pct / 100 * count patches) [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
 end
 
 
@@ -63,18 +66,34 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
+  clear-all
+  ask n-of (dirt_pct / 100 * count patches) patches [ set pcolor brown ]
+
+
+ ; set patch-list list (random 10) (random 20)
 end
 
 
 ; --- Setup vacuums ---
 to setup-vacuums
   ; In this method you may create the vacuum cleaner agents (in this case, there is only 1 vacuum cleaner agent).
+  create-vacuums 1
+  ask vacuums [ setxy random-xcor random-ycor ]
+end
+
+to clean-dirt
+   ask turtles [
+    if pcolor = brown [
+      set pcolor black
+    ]
+  ]
 end
 
 
 ; --- Setup ticks ---
 to setup-ticks
   ; In this method you may start the tick counter.
+  reset-ticks
 end
 
 
@@ -105,6 +124,7 @@ end
 ; --- Execute actions ---
 to execute-actions
   ; Here you should put the code related to the actions performed by your agent: moving and cleaning (and in Assignment 1.3, throwing away dirt).
+   ;facexy x y t
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -143,7 +163,7 @@ dirt_pct
 dirt_pct
 0
 100
-0
+6
 1
 1
 NIL
@@ -646,7 +666,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.3
+NetLogo 5.3.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
