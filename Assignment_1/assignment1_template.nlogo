@@ -69,8 +69,17 @@ to setup-patches
   set total_dirty dirt_pct / 100 * count patches
   ask n-of total_dirty patches [ set pcolor brown ]
     ; set beliefs
-  ask vacuums [set beliefs n-values (dirt_pct / 100 * count patches) [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
+  ask vacuums [set beliefs n-values total_dirty [ list (random 25 - 12) (random 25 - 12) ] ] ; should be changed into sqrt of count patches
 
+  ask vacuums [
+    foreach beliefs [
+      let x item 0 ?
+      let y item 1 ?
+      show x
+      show y
+      ask patch x y [set pcolor brown]
+    ]
+  ]
 end
 
 ; --- Setup vacuums ---
