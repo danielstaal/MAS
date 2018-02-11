@@ -20,9 +20,7 @@
 ;
 ; 1) total_dirty: this variable represents the amount of dirty cells in the environment.
 ; 2) time: the total simulation time.
-
-globals [total_dirty time dirty_patches]
-
+globals [total_dirty time ]
 
 
 ; --- Agents ---
@@ -70,8 +68,6 @@ to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
   set total_dirty dirt_pct / 100 * count patches
   ask n-of total_dirty patches [ set pcolor brown ]
-
-
     ; set beliefs
   ask vacuums [set beliefs n-values total_dirty [ list (random 25 - 12) (random 25 - 12) ] ] ; should be changed into sqrt of count patches
 
@@ -84,7 +80,6 @@ to setup-patches
       ask patch x y [set pcolor brown]
     ]
   ]
-
 end
 
 ; --- Setup vacuums ---
@@ -106,9 +101,11 @@ to update-desires
   ; You should update your agent's desires here.
   ; At the beginning your agent should have the desire to clean all the dirt.
   ; If it realises that there is no more dirt, its desire should change to something like 'stop and turn off'.
+
   if total_dirty > 0 [
-    clean-dirt
+    print "clean-dirt"
   ]
+
 end
 
 
@@ -148,15 +145,6 @@ to execute-actions
      facexy x y
      forward 1
    ]
-end
-
-to clean-dirt
-   ask vacuums [
-    if pcolor = brown [
-      set pcolor black
-      ; remove first belief
-    ]
-  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
