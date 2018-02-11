@@ -66,10 +66,21 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
-  ask n-of (dirt_pct / 100 * count patches) patches [ set pcolor brown ]
+  ;ask n-of (dirt_pct / 100 * count patches) patches [ set pcolor brown ]
     ; set beliefs
   ask vacuums [set beliefs n-values (dirt_pct / 100 * count patches) [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
 
+  ask vacuums [
+    foreach beliefs [
+      let x item 0 ?
+      let y item 1 ?
+      show x
+      show y
+      ask patches [
+        patch with x y [set pcolor brown]
+        ]
+      ]
+   ]
 end
 
 
