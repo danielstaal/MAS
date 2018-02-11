@@ -66,9 +66,35 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
-  ask n-of (dirt_pct / 100 * count patches) patches [ set pcolor brown ]
+  set total_dirty dirt_pct / 100 * count patches
+  ask n-of total_dirty patches [ set pcolor brown ]
+  set dirty_patches patches with [ pcolor = brown ]
+
+  ask vacuums [
+    set beliefs []
+  ]
+
+  let devlist show so
+
+  foreach sort dirty_patches [
+    let cors (list pxcor pycor)
+    ask vacuums [
+      set beliefs lput cors beliefs
+      print beliefs
+    ]
+  ]
+
+  ask dirty_patches [
+    let cors (list pxcor pycor)
+
+  ask vacuums [
+    set beliefs lput cors beliefs
+    print beliefs
+    ]
+  ]
     ; set beliefs
-  ask vacuums [set beliefs n-values (dirt_pct / 100 * count patches) [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
+  ;ask vacuums [set beliefs n-values total_dirty [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
+
 
 end
 
@@ -80,14 +106,7 @@ to setup-vacuums
   ask vacuums [ setxy random-xcor random-ycor ]
 end
 
-to clean-dirt
-   ask vacuums [
-    if pcolor = brown [
-      set pcolor black
-      ; remove first belief
-    ]
-  ]
-end
+
 
 
 ; --- Setup ticks ---
@@ -102,6 +121,7 @@ to update-desires
   ; You should update your agent's desires here.
   ; At the beginning your agent should have the desire to clean all the dirt.
   ; If it realises that there is no more dirt, its desire should change to something like 'stop and turn off'.
+
 end
 
 
@@ -135,14 +155,23 @@ to execute-actions
      clean-dirt
    ]
 end
+
+to clean-dirt
+   ask vacuums [
+    if pcolor = brown [
+      set pcolor black
+      ; remove first belief
+    ]
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 782
 17
-1382
-638
-12
-12
+1051
+307
+5
+5
 23.6
 1
 10
@@ -153,10 +182,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--12
-12
--12
-12
+-5
+5
+-5
+5
 1
 1
 1
