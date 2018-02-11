@@ -55,8 +55,8 @@ end
 to go
   ; This method executes the main processing cycle of an agent.
   ; For Assignment 1, this involves updating desires, beliefs and intentions, and executing actions (and advancing the tick counter).
-  update-desires
   update-beliefs
+  update-desires
   update-intentions
   execute-actions
   tick
@@ -66,8 +66,8 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
-  set total_dirty dirt_pct / 100 * count patches
-  ask n-of total_dirty patches [ set pcolor brown ]
+  set total_dirty round (dirt_pct / 100 * count patches)
+  ;ask n-of total_dirty patches [ set pcolor brown ]
     ; set beliefs
   ask vacuums [set beliefs n-values total_dirty [ list (random 25 - 12) (random 25 - 12) ] ] ; should be changed into sqrt of count patches
 
@@ -75,9 +75,9 @@ to setup-patches
     foreach beliefs [
       let x item 0 ?
       let y item 1 ?
+      ask patch x y [set pcolor brown]
       show x
       show y
-      ask patch x y [set pcolor brown]
     ]
   ]
 end
@@ -102,8 +102,11 @@ to update-desires
   ; At the beginning your agent should have the desire to clean all the dirt.
   ; If it realises that there is no more dirt, its desire should change to something like 'stop and turn off'.
 
-  if total_dirty > 0 [
-    clean-dirt
+  print total_dirty
+  if total_dirty = 0 [
+    print total_dirty
+    print "everything is cleaned: stop and turn off"
+    [stop]
   ]
 
 end
@@ -117,11 +120,28 @@ to update-beliefs
  ; In Assignment 1.3, your agent also needs to know where is the garbage can.
 
  ; cleans dirt whenever possible and removes first belief
+
+ ; if beliefs is same as location of vacuum
   ask vacuums [
-    if pcolor = brown [
-      set pcolor black
-      set beliefs remove-item 0 beliefs
-    ]
+     let firstbelief item 0 beliefs
+     let x item 0 firstbelief
+     let y item 1 firstbelief
+     print "turtle:"
+     show round xcor
+     show round ycor
+     print "belief:"
+     show x
+     show y
+
+     if round xcor = x and round ycor = y [
+       print "cleaned one tile"
+       set pcolor black
+       set beliefs remove-item 0 beliefs
+       print "removed belief"
+       print x
+       print y
+       set total_dirty total_dirty - 1
+     ]
   ]
 end
 
@@ -139,9 +159,7 @@ to execute-actions
    ask vacuums [
      let belief item 0 beliefs
      let x item 0 belief
-     show x
      let y item 1 belief
-     show y
      facexy x y
      forward 1
    ]
@@ -150,11 +168,11 @@ end
 GRAPHICS-WINDOW
 782
 17
-1382
-638
+1167
+423
 12
 12
-23.6
+15.0
 1
 10
 1
@@ -183,7 +201,7 @@ dirt_pct
 dirt_pct
 0
 100
-6
+1
 1
 1
 NIL
