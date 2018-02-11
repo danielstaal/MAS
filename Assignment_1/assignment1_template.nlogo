@@ -63,6 +63,8 @@ to go
 end
 
 
+
+
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
