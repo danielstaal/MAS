@@ -20,7 +20,7 @@
 ;
 ; 1) total_dirty: this variable represents the amount of dirty cells in the environment.
 ; 2) time: the total simulation time.
-globals [total_dirty time]
+globals [total_dirty time ]
 
 
 ; --- Agents ---
@@ -72,7 +72,6 @@ to setup-patches
 
 end
 
-
 ; --- Setup vacuums ---
 to setup-vacuums
   ; In this method you may create the vacuum cleaner agents (in this case, there is only 1 vacuum cleaner agent).
@@ -85,6 +84,7 @@ to clean-dirt
     if pcolor = brown [
       set pcolor black
       ; remove first belief
+      ; TEST
     ]
   ]
 end
