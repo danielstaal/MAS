@@ -66,7 +66,8 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
-  ask n-of (dirt_pct / 100 * count patches) patches [ set pcolor brown ]
+  set total_dirty dirt_pct / 100 * count patches
+  ask n-of total_dirty patches [ set pcolor brown ]
     ; set beliefs
   ask vacuums [set beliefs n-values (dirt_pct / 100 * count patches) [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
 
@@ -78,17 +79,6 @@ to setup-vacuums
   create-vacuums 1
   ask vacuums [ setxy random-xcor random-ycor ]
 end
-
-to clean-dirt
-   ask vacuums [
-    if pcolor = brown [
-      set pcolor black
-      ; remove first belief
-      ; TEST
-    ]
-  ]
-end
-
 
 ; --- Setup ticks ---
 to setup-ticks
@@ -102,6 +92,11 @@ to update-desires
   ; You should update your agent's desires here.
   ; At the beginning your agent should have the desire to clean all the dirt.
   ; If it realises that there is no more dirt, its desire should change to something like 'stop and turn off'.
+
+  if total_dirty > 0 [
+    clean-dirt
+  ]
+
 end
 
 
@@ -111,6 +106,14 @@ to update-beliefs
  ; At the beginning your agent will receive global information about where all the dirty locations are.
  ; This belief set needs to be updated frequently according to the cleaning actions: if you clean dirt, you do not believe anymore there is a dirt at that location.
  ; In Assignment 1.3, your agent also needs to know where is the garbage can.
+
+ ; cleans dirt whenever possible and removes first belief
+  ask vacuums [
+    if pcolor = brown [
+      set pcolor black
+      set beliefs remove-item 0 beliefs
+    ]
+  ]
 end
 
 
@@ -132,7 +135,6 @@ to execute-actions
      show y
      facexy x y
      forward 1
-     clean-dirt
    ]
 end
 @#$#@#$#@
