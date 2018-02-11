@@ -20,7 +20,9 @@
 ;
 ; 1) total_dirty: this variable represents the amount of dirty cells in the environment.
 ; 2) time: the total simulation time.
+
 globals [total_dirty time dirty_patches]
+
 
 
 ; --- Agents ---
@@ -68,36 +70,22 @@ to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
   set total_dirty dirt_pct / 100 * count patches
   ask n-of total_dirty patches [ set pcolor brown ]
-  set dirty_patches patches with [ pcolor = brown ]
 
-  ask vacuums [
-    set beliefs []
-  ]
 
-  let devlist show so
-
-  foreach sort dirty_patches [
-    let cors (list pxcor pycor)
-    ask vacuums [
-      set beliefs lput cors beliefs
-      print beliefs
-    ]
-  ]
-
-  ask dirty_patches [
-    let cors (list pxcor pycor)
-
-  ask vacuums [
-    set beliefs lput cors beliefs
-    print beliefs
-    ]
-  ]
     ; set beliefs
-  ;ask vacuums [set beliefs n-values total_dirty [ list (random 12) (random 12) ] ] ; should be changed into sqrt of count patches
+  ask vacuums [set beliefs n-values total_dirty [ list (random 25 - 12) (random 25 - 12) ] ] ; should be changed into sqrt of count patches
 
+  ask vacuums [
+    foreach beliefs [
+      let x item 0 ?
+      let y item 1 ?
+      show x
+      show y
+      ask patch x y [set pcolor brown]
+    ]
+  ]
 
 end
-
 
 ; --- Setup vacuums ---
 to setup-vacuums
@@ -105,9 +93,6 @@ to setup-vacuums
   create-vacuums 1
   ask vacuums [ setxy random-xcor random-ycor ]
 end
-
-
-
 
 ; --- Setup ticks ---
 to setup-ticks
@@ -121,7 +106,9 @@ to update-desires
   ; You should update your agent's desires here.
   ; At the beginning your agent should have the desire to clean all the dirt.
   ; If it realises that there is no more dirt, its desire should change to something like 'stop and turn off'.
-
+  if total_dirty > 0 [
+    clean-dirt
+  ]
 end
 
 
@@ -131,6 +118,14 @@ to update-beliefs
  ; At the beginning your agent will receive global information about where all the dirty locations are.
  ; This belief set needs to be updated frequently according to the cleaning actions: if you clean dirt, you do not believe anymore there is a dirt at that location.
  ; In Assignment 1.3, your agent also needs to know where is the garbage can.
+
+ ; cleans dirt whenever possible and removes first belief
+  ask vacuums [
+    if pcolor = brown [
+      set pcolor black
+      set beliefs remove-item 0 beliefs
+    ]
+  ]
 end
 
 
@@ -152,7 +147,6 @@ to execute-actions
      show y
      facexy x y
      forward 1
-     clean-dirt
    ]
 end
 
