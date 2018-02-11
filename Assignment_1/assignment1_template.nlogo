@@ -15,6 +15,7 @@
 ; For instance, if dirt_pct = 5, initially 5% of all the patches should contain dirt (and should be cleaned by your smart vacuum cleaner).
 
 
+
 ; --- Global variables ---
 ; The following global variables are given.
 ;
