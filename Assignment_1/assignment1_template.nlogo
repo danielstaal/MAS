@@ -68,17 +68,18 @@ end
 ; --- Setup patches ---
 to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
-  set total_dirty dirt_pct / 100 * count patches
-  ask n-of total_dirty patches [ set pcolor brown ]
-    ; set beliefs
-  ask vacuums [set beliefs n-values total_dirty [ list (random 25 - 12) (random 25 - 12) ] ] ; should be changed into sqrt of count patches
+  set total_dirty round (dirt_pct / 100 * count patches)
+  ;ask n-of total_dirty patches [ set pcolor brown ]
+  ; set beliefs
+
+  ask vacuums [set beliefs n-values total_dirty [ list (random max-pxcor * 2 - max-pxcor) (random max-pycor * 2 - max-pycor) ] ] ; should be changed into sqrt of count patches
 
   ask vacuums [
     foreach beliefs [
       let x item 0 ?
       let y item 1 ?
-      show x
-      show y
+      print x
+      print y
       ask patch x y [set pcolor brown]
     ]
   ]
@@ -103,11 +104,9 @@ to update-desires
   ; You should update your agent's desires here.
   ; At the beginning your agent should have the desire to clean all the dirt.
   ; If it realises that there is no more dirt, its desire should change to something like 'stop and turn off'.
-
-  if total_dirty > 0 [
-    print "clean-dirt"
-  ]
-
+  ifelse total_dirty > 0
+  [ ask vacuums [ set desire "clean-dirt"]]
+  [ ask vacuums [set desire "stop and turn off"]]
 end
 
 
@@ -152,11 +151,11 @@ end
 GRAPHICS-WINDOW
 782
 17
-1051
-307
-5
-5
-23.6
+1164
+420
+12
+12
+15.0
 1
 10
 1
@@ -166,10 +165,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--5
-5
--5
-5
+-12
+12
+-12
+12
 1
 1
 1
@@ -185,7 +184,7 @@ dirt_pct
 dirt_pct
 0
 100
-6
+2
 1
 1
 NIL
