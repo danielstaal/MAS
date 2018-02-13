@@ -70,8 +70,10 @@ to setup-patches
   ; In this method you may create the environment (patches), using colors to define dirty and cleaned cells.
   set total_dirty round (dirt_pct / 100 * count patches)
   ;ask n-of total_dirty patches [ set pcolor brown ]
-    ; set beliefs
-  ask vacuums [set beliefs n-values total_dirty [ list (random 25 - 12) (random 25 - 12) ] ] ; should be changed into sqrt of count patches
+  ; set beliefs
+
+  ask vacuums [set beliefs n-values total_dirty [ list (random max-pxcor * 2 - max-pxcor) (random max-pycor * 2 - max-pycor) ] ] ; should be changed into sqrt of count patches
+
 
   ask vacuums [
     foreach beliefs [
@@ -80,6 +82,7 @@ to setup-patches
       ask patch x y [set pcolor brown]
       show x
       show y
+
     ]
   ]
 end
@@ -103,14 +106,9 @@ to update-desires
   ; You should update your agent's desires here.
   ; At the beginning your agent should have the desire to clean all the dirt.
   ; If it realises that there is no more dirt, its desire should change to something like 'stop and turn off'.
-
-  print total_dirty
-  if total_dirty = 0 [
-    print total_dirty
-    print "everything is cleaned: stop and turn off"
-    [stop]
-  ]
-
+  ifelse total_dirty > 0
+  [ ask vacuums [ set desire "clean-dirt"]]
+  [ ask vacuums [set desire "stop and turn off"]]
 end
 
 
@@ -168,152 +166,31 @@ to execute-actions
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-782
-17
-1167
-423
-12
-12
-15.0
+210
+10
+649
+470
+16
+16
+13.0
 1
 10
 1
 1
 1
 0
+1
+1
+1
+-16
+16
+-16
+16
 0
 0
-1
--12
-12
--12
-12
-1
-1
 1
 ticks
 30.0
-
-SLIDER
-11
-49
-777
-82
-dirt_pct
-dirt_pct
-0
-100
-1
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-11
-17
-395
-50
-NIL
-go
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-394
-17
-777
-50
-NIL
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-MONITOR
-12
-115
-778
-160
-Number of dirty cells left.
-total_dirty
-17
-1
-11
-
-BUTTON
-11
-82
-777
-115
-NIL
-setup
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-MONITOR
-12
-160
-778
-205
-The agent's current desire.
-[desire] of vacuum 0
-17
-1
-11
-
-MONITOR
-12
-205
-778
-250
-The agent's current belief base.
-[beliefs] of vacuum 0
-1000
-1
-11
-
-MONITOR
-12
-295
-778
-340
-Total simulation time.
-time
-17
-1
-11
-
-MONITOR
-12
-250
-778
-295
-The agent's current intention.
-[intention] of vacuum 0
-17
-1
-11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -494,23 +371,6 @@ Circle -16777216 true false 113 68 74
 Polygon -10899396 true false 189 233 219 188 249 173 279 188 234 218
 Polygon -10899396 true false 180 255 150 210 105 210 75 240 135 240
 
-garbage-can
-false
-0
-Polygon -16777216 false false 60 240 66 257 90 285 134 299 164 299 209 284 234 259 240 240
-Rectangle -7500403 true true 60 75 240 240
-Polygon -7500403 true true 60 238 66 256 90 283 135 298 165 298 210 283 235 256 240 238
-Polygon -7500403 true true 60 75 66 57 90 30 135 15 165 15 210 30 235 57 240 75
-Polygon -7500403 true true 60 75 66 93 90 120 135 135 165 135 210 120 235 93 240 75
-Polygon -16777216 false false 59 75 66 57 89 30 134 15 164 15 209 30 234 56 239 75 235 91 209 120 164 135 134 135 89 120 64 90
-Line -16777216 false 210 120 210 285
-Line -16777216 false 90 120 90 285
-Line -16777216 false 125 131 125 296
-Line -16777216 false 65 93 65 258
-Line -16777216 false 175 131 175 296
-Line -16777216 false 235 93 235 258
-Polygon -16777216 false false 112 52 112 66 127 51 162 64 170 87 185 85 192 71 180 54 155 39 127 36
-
 house
 false
 0
@@ -647,37 +507,6 @@ Polygon -10899396 true false 105 90 75 75 55 75 40 89 31 108 39 124 60 105 75 10
 Polygon -10899396 true false 132 85 134 64 107 51 108 17 150 2 192 18 192 52 169 65 172 87
 Polygon -10899396 true false 85 204 60 233 54 254 72 266 85 252 107 210
 Polygon -7500403 true true 119 75 179 75 209 101 224 135 220 225 175 261 128 261 81 224 74 135 88 99
-
-ufo top
-false
-0
-Circle -1 true false 15 15 270
-Circle -16777216 false false 15 15 270
-Circle -7500403 true true 75 75 150
-Circle -16777216 false false 75 75 150
-Circle -7500403 true true 60 60 30
-Circle -7500403 true true 135 30 30
-Circle -7500403 true true 210 60 30
-Circle -7500403 true true 240 135 30
-Circle -7500403 true true 210 210 30
-Circle -7500403 true true 135 240 30
-Circle -7500403 true true 60 210 30
-Circle -7500403 true true 30 135 30
-Circle -16777216 false false 30 135 30
-Circle -16777216 false false 60 210 30
-Circle -16777216 false false 135 240 30
-Circle -16777216 false false 210 210 30
-Circle -16777216 false false 240 135 30
-Circle -16777216 false false 210 60 30
-Circle -16777216 false false 135 30 30
-Circle -16777216 false false 60 60 30
-
-vacuum-cleaner
-true
-0
-Polygon -2674135 true false 75 90 105 150 165 150 135 135 105 135 90 90 75 90
-Circle -2674135 true false 105 135 30
-Rectangle -2674135 true false 75 105 90 120
 
 wheel
 false
