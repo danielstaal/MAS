@@ -12,6 +12,9 @@ buses-own [
 
   ; New local variables for students.
   ; You can create any new local variable you want. Just declare them here.
+  bs_list
+  bs_counter
+  next
 
 ]
  
@@ -22,9 +25,67 @@ to init-buses
 
   ; This list contains the topology of the entire network of bus stops, which is known to all agents. You can use this, for instance, to calculate the shortest path between two bus stops.
   set graph [[22 15 14] [11 19 23 7] [8] [16 4 20 9] [3 5 10] [4 16 10 17] [8] [1 17 13] [2 6 9] [3 8 20] [4 5 17 13 21] [1 16 17] [20 15 22] [7 10 22 23] [0 23] [0 12 18] [3 5 11] [5 7 10 11] [15] [1 23] [3 9 12 21] [10 20 22] [0 12 13 21] [1 13 14 19]]
+  
+  ;TODO should contain all busstops
+  set bs_list [4 5 16 11 17 10 21 20 3]  ; List containing the schedule of the bus in bus_stop IDs (set bs_list n-values 24 [?] doesn't work since not all busstops are adjecent.)
+  set bs_counter 0                       ; ID of where the bus currently is in its schedule
 end
 
 to execute-actions
   ; Add decision making strategies for your agents here.
   ; You are allowed to use the global variable 'ticks'.
+    
+    ; if the bus is at a stop, it has to change 'next', pick up all passengers, and drop off all passengers with destination equal to 'current_stop'
+    if current_stop != -1 [
+         ; sets 'next' as the next stop in schedule
+         if bs_counter = length bs_list 
+           [ set bs_counter 0 ]
+         set next item bs_counter bs_list
+         set bs_counter bs_counter + 1
+         print "current"
+         print current_stop
+         print "next"
+         print next_stop
+         
+         ; drops off all passengers with destination equal to current_stop
+         foreach bus_passengers [
+              let passenger_id item 0 ?
+              let destination item 1 ?
+              if destination = current_stop [
+                 drop-off-passenger passenger_id
+                 print "dropped off passenger:"
+                 print ?
+              ]
+         ]
+         
+         ; picks up all passengers at current busstop (if the bus is not full)
+         let pas_list get-passengers-at-stop current_stop
+         foreach pas_list [
+             let passenger_id item 0 ?
+             ifelse length bus_passengers != get-max-passengers bus_type[
+               pick-up-passenger passenger_id
+               print "picked up passenger:"
+               print ?
+             ]
+             [
+               print "Bus is full"
+             ]
+          ]
+
+    ]
+    ; travels to next busstop
+    travel-to next
+
+end
+
+to-report get-max-passengers [ bs_type ]
+  if bs_type = 1[
+    report 12
+  ]
+  if bs_type = 2[
+    report 60
+  ]
+  if bs_type = 3[
+    report 150
+  ]
 end
