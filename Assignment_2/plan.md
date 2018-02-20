@@ -16,6 +16,7 @@ When to add a bus?
 * When other buses are full
 * When many people are waiting
 * When no bus with empty spaces is going to pick the passengers up
+* When the amount of people waiting is much larger than the total amount the current buses can carry
 
 What trajectory to create for a new bus?
 * With most people
