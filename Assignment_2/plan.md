@@ -1,7 +1,7 @@
 Plan for assignment 2 
 
 MAS-ter plan
-<br><br><br>
+<br><br>
 
 Messages
 * What to communicate?
