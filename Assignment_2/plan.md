@@ -4,7 +4,7 @@ MAS-ter plan
 <br><br>
 
 Messages
-* What to communicate?
+* What to communicate between buses?
   * List of busstops (bs-list)
   * Amount of passengers (bus_passengers)
   * ...
