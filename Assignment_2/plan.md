@@ -7,7 +7,7 @@ Messages
 * What to communicate between buses?
   * List of busstops (bs-list)
   * Amount of passengers (bus_passengers)
-* Message looks like this: [tick sender message]. message:
+* Message looks like this: [tick sender message]
   *  maybe message = [ bs-list bus_passengers ]
 * To achieve what?
   * Only add bus when necessary
