@@ -12,10 +12,12 @@ buses-own [
 
   ; New local variables for students.
   ; You can create any new local variable you want. Just declare them here.
+  
+  ; list of bus stops where the bus will go
   bs_list
+  ; ID of where the bus currently is in its schedule
   bs_counter
   next
-
 ]
  
 globals [graph]
@@ -28,7 +30,7 @@ to init-buses
   
   ;TODO should contain all busstops
   set bs_list [4 5 16 11 17 10 13 7 1 19 23 14 0 15 18 15 12 22 21 20 9 8 2 6 8 9 3]  ; List containing the schedule of the bus in bus_stop IDs (set bs_list n-values 24 [?] doesn't work since not all busstops are adjecent.)
-  set bs_counter 0                       ; ID of where the bus currently is in its schedule
+  set bs_counter 0                     
 end
 
 to execute-actions
@@ -69,7 +71,6 @@ to execute-actions
                print ?
              ]
              [
-               add-bus 1
                print "Bus is full"
              ]
           ]
