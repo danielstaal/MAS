@@ -40,10 +40,8 @@ to execute-actions
     ; if the bus is at a stop, it has to change 'next', pick up all passengers, and drop off all passengers with destination equal to 'current_stop'
     if current_stop != -1 [
          ; sets 'next' as the next stop in schedule
-         if bs_counter = length bs_list 
-           [ set bs_counter 0 ]
-         set next item bs_counter bs_list
-         set bs_counter bs_counter + 1
+         set next best-busstop
+    
          print "current"
          print current_stop
          print "next"
@@ -91,3 +89,55 @@ to-report get-max-passengers [ bs_type ]
     report 150
   ]
 end
+
+to-report best-busstop
+  let best_busstop 0
+  let highest_reward -1000
+  
+  ; index in for loop
+  let i 0
+  let reward 0
+  ; for each possible busstop calculate the rewardfunction
+  foreach item current_stop graph[
+    ; retrieve the busstop to be compared
+    let compared_busstop item i item current_stop graph
+    ; calculate the reward
+    set reward reward-function(compared_busstop)
+    if reward > highest_reward [
+      set highest_reward reward
+      set best_busstop compared_busstop
+    ]
+    set i i + 1
+  ]
+  report best_busstop
+  
+end
+
+to-report reward-function [ bus_stop ] 
+  let reward 0
+  
+  let dist get-distance current_stop bus_stop
+  let no_of_people_waiting length get-passengers-at-stop bus_stop
+  
+  ;show "dist"
+  ;show dist
+  ;show "no_of_passengers"
+  ;show no_of_people_waiting
+  
+  set reward -1 * (dist - no_of_people_waiting)
+  
+  show "busstop"
+  show bus_stop
+  show "reward"
+  show reward
+  
+  
+  report reward
+end
+
+
+
+
+
+
+  
