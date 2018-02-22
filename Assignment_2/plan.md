@@ -5,7 +5,7 @@ MAS-ter plan
 
 Messages
 * What to communicate between buses?
-  * List of busstops (bs-list)
+  * List of busstops for this bus (bs-list)
   * Amount of passengers (bus_passengers)
 * Message looks like this: [tick sender message]
   *  maybe message = [ bs-list bus_passengers ]
@@ -24,5 +24,7 @@ When to add a bus?
 What trajectory to create for a new bus?
 * With most people
 * When no or not enough buses are going to that location
+* reward function determines this:
+  * reward function = [ no_of_passengers_waiting directions_of_ ]
 
 
