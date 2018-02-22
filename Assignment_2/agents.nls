@@ -13,11 +13,12 @@ buses-own [
   ; New local variables for students.
   ; You can create any new local variable you want. Just declare them here.
   
-  ; list of bus stops where the bus will go
-  bs_list
-  ; ID of where the bus currently is in its schedule
-  bs_counter
-  next
+
+  bs_list   ; list of bus stops where the bus will go
+  bs_counter   ; ID of where the bus currently is in its schedule
+  next ; TODO might be unnecessary 
+  number_of_buses
+  inbox_length ; length of the inbox
 ]
  
 globals [graph]
@@ -28,26 +29,44 @@ to init-buses
   ; This list contains the topology of the entire network of bus stops, which is known to all agents. You can use this, for instance, to calculate the shortest path between two bus stops.
   set graph [[22 15 14] [11 19 23 7] [8] [16 4 20 9] [3 5 10] [4 16 10 17] [8] [1 17 13] [2 6 9] [3 8 20] [4 5 17 13 21] [1 16 17] [20 15 22] [7 10 22 23] [0 23] [0 12 18] [3 5 11] [5 7 10 11] [15] [1 23] [3 9 12 21] [10 20 22] [0 12 13 21] [1 13 14 19]]
   
-  ;TODO should contain all busstops
   set bs_list [4 5 16 11 17 10 13 7 1 19 23 14 0 15 18 15 12 22 21 20 9 8 2 6 8 9 3]  ; List containing the schedule of the bus in bus_stop IDs (set bs_list n-values 24 [?] doesn't work since not all busstops are adjecent.)
-  set bs_counter 0                     
+  set bs_counter 0
+  set inbox_length 0
+  
+  ; sends all buses that a new bus is added
+  set number_of_buses bus_id - 24
+  let bus_list n-values number_of_buses [24 + ?]
+  foreach bus_list [
+    send-message ? "bus_added"
+  ]
+  ; increases the number of buses
+  set number_of_buses number_of_buses + 1
+               
 end
 
 to execute-actions
   ; Add decision making strategies for your agents here.
   ; You are allowed to use the global variable 'ticks'.
-    
-    ; if the bus is at a stop, it has to change 'next', pick up all passengers, and drop off all passengers with destination equal to 'current_stop'
+  
+  ; add a bus
+  if ticks = 10 [
+    print "added one bus" 
+    add-bus 1
+    ]
+  
+  open-inbox
+      
+    ; if the bus is at a stop, it has to change 'next', drop off all passengers with destination equal to 'current_stop', and pick up all passengers. 
     if current_stop != -1 [
          ; sets 'next' as the next stop in schedule
          if bs_counter = length bs_list 
            [ set bs_counter 0 ]
          set next item bs_counter bs_list
          set bs_counter bs_counter + 1
-         print "current"
-         print current_stop
-         print "next"
-         print next_stop
+;         print "current"
+;         print current_stop
+;         print "next"
+;         print next_stop
          
          ; drops off all passengers with destination equal to current_stop
          foreach bus_passengers [
@@ -55,8 +74,8 @@ to execute-actions
               let destination item 1 ?
               if destination = current_stop [
                  drop-off-passenger passenger_id
-                 print "dropped off passenger:"
-                 print ?
+;                 print "dropped off passenger:"
+;                 print ?
               ]
          ]
          
@@ -67,17 +86,46 @@ to execute-actions
              ; check if bus is full
              ifelse length bus_passengers != get-max-passengers bus_type[
                pick-up-passenger passenger_id
-               print "picked up passenger:"
-               print ?
+;               print "picked up passenger:"
+;               print ?
              ]
              [
                print "Bus is full"
              ]
           ]
+         send-info
     ]
     ; travels to next busstop
     travel-to next
 
+end
+
+; sends information to all other buses
+to send-info
+   let bus_list n-values number_of_buses [24 + ?]
+   foreach bus_list [
+     if bus_id != ? [
+       ; sends a string combining amount of passengers in bus and next stop
+       let messagestart word length bus_passengers " "
+       let message word messagestart next
+       send-message ? message
+     ]
+   ]
+end
+
+; opens the inbox and reacts to different messages
+to open-inbox
+  show "inbox"
+  show inbox
+  ; check for a new message
+  if length inbox > inbox_length [
+    let last_message last inbox
+    ; increase number of buses because of a newly added bus
+    if last last_message = "bus_added" [
+      set number_of_buses number_of_buses + 1
+      set inbox_length inbox_length + 1
+    ]
+  ]
 end
 
 to-report get-max-passengers [ bs_type ]
