@@ -5,7 +5,7 @@ MAS-ter plan
 
 Messages
 * What to communicate between buses?
-  * List of busstops (bs-list)
+  * List of busstops for this bus (bs-list)
   * Amount of passengers (bus_passengers)
 * Message looks like this: [tick sender message]
   *  maybe message = [ bs-list bus_passengers ]
