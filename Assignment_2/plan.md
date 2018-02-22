@@ -24,5 +24,7 @@ When to add a bus?
 What trajectory to create for a new bus?
 * With most people
 * When no or not enough buses are going to that location
+* reward function determines this:
+  * reward function = [ no_of_passengers_waiting directions_of_ ]
 
 
