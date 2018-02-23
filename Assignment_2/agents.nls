@@ -28,7 +28,7 @@ to init-buses
 
   ; This list contains the topology of the entire network of bus stops, which is known to all agents. You can use this, for instance, to calculate the shortest path between two bus stops.
   set graph [[22 15 14] [11 19 23 7] [8] [16 4 20 9] [3 5 10] [4 16 10 17] [8] [1 17 13] [2 6 9] [3 8 20] [4 5 17 13 21] [1 16 17] [20 15 22] [7 10 22 23] [0 23] [0 12 18] [3 5 11] [5 7 10 11] [15] [1 23] [3 9 12 21] [10 20 22] [0 12 13 21] [1 13 14 19]]
-  
+
   set bs_list [4 5 16 11 17 10 13 7 1 19 23 14 0 15 18 15 12 22 21 20 9 8 2 6 8 9 3]  ; List containing the schedule of the bus in bus_stop IDs (set bs_list n-values 24 [?] doesn't work since not all busstops are adjecent.)
   set bs_counter 0
   set inbox_length 0
@@ -108,8 +108,8 @@ end
 
 ; opens the inbox and reacts to different messages
 to open-inbox
-  show "inbox"
-  show inbox
+  ;show "inbox"
+  ;show inbox
   ; check for a new message
   if length inbox > inbox_length [
     let last_message last inbox
@@ -133,6 +133,7 @@ to-report get-max-passengers [ bs_type ]
   ]
 end
 
+; retrieve best next stop
 to-report best-busstop
   let best_busstop 0
   let highest_reward -1000
@@ -159,24 +160,61 @@ end
 to-report reward-function [ bus_stop ] 
   let reward 0
   
+  ; calculate different features
   let dist get-distance current_stop bus_stop
   let no_of_people_waiting length get-passengers-at-stop bus_stop
+  let no_of_people_destination get-no-destinations bus_stop
   
-  ;show "dist"
-  ;show dist
-  ;show "no_of_passengers"
-  ;show no_of_people_waiting
+  ; calculate reward
+  set reward (- dist + no_of_people_waiting + no_of_people_destination)
   
-  set reward -1 * (dist - no_of_people_waiting)
-  
-  show "busstop"
-  show bus_stop
-  show "reward"
-  show reward
-  
+  ;show "busstop"
+  ;show bus_stop
+  ;show "reward"
+  ;show reward
   
   report reward
 end
+
+to-report get-no-destinations [ bus_stop ]
+  let counter 0
+  foreach bus_passengers [
+    if item 1 ? = bus_stop[
+      set counter counter + 1
+    ]
+  ]  
+  show "counter"
+  show bus_stop
+  show counter
+  report counter
+end  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
