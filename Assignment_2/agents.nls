@@ -62,45 +62,77 @@ to execute-actions
     add-bus 1
     ]
   
+  show " leasingList"
+  show leasing_list
+  
   open-inbox
       
-    ; if the bus is at a stop, it has to change 'next', drop off all passengers with destination equal to 'current_stop', and pick up all passengers. 
+ 
     if current_stop != -1 [
+      ifelse current_stop = 3 [
+        at-dam
+      ]
+    ; if the bus is at a stop, it has to change 'next', drop off all passengers with destination equal to 'current_stop', and pick up all passengers.
+       [         
          ; sets 'next' as the next stop in schedule
          set next best-busstop
-     
-         ; drops off all passengers with destination equal to current_stop
-         foreach bus_passengers [
-              let passenger_id item 0 ?
-              let destination item 1 ?
-              if destination = current_stop [
-                 drop-off-passenger passenger_id
-;                 print "dropped off passenger:"
-;                 print ?
-              ]
-         ]
-         
-         ; picks up all passengers at current busstop (if the bus is not full)
-         let pas_list get-passengers-at-stop current_stop
-         foreach pas_list [
-             let passenger_id item 0 ?
-             ; check if bus is full
-             ifelse length bus_passengers != get-max-passengers bus_type[
-               pick-up-passenger passenger_id
-;               print "picked up passenger:"
-;               print ?
-             ]
-             [
-               print "Bus is full"
-             ]
-          ]
+         drop-off-passengers
+         pick-up-passengers
          send-info
+       ]
     ]
     ; travels to next busstop
     travel-to next
     update-nr-of-buses
     show "number of buses: "
     show number_of_buses
+end
+
+; chooses a new region (TODO: and chooses to add a new bus or not)
+to at-dam
+  let direction random 4
+  if direction = 0 [
+    set next item 0 north
+  ]
+  if direction = 1 [
+    set next item 0 east
+  ]
+  if direction = 2 [
+    set next item 0 south
+  ]
+  if direction = 3 [
+    set next item 0 west
+  ]
+end
+
+ ; drops off all passengers with destination equal to current_stop
+to drop-off-passengers
+ foreach bus_passengers [
+      let passenger_id item 0 ?
+      let destination item 1 ?
+      if destination = current_stop [
+         drop-off-passenger passenger_id
+;                 print "dropped off passenger:"
+;                 print ?
+      ]
+ ]
+end
+ 
+; picks up all passengers at current busstop (if the bus is not full)
+to pick-up-passengers
+   let pas_list get-passengers-at-stop current_stop
+   foreach pas_list [
+     let passenger_id item 0 ?
+     ; check if bus is full
+     ifelse length bus_passengers != get-max-passengers bus_type[
+       pick-up-passenger passenger_id
+       ;               print "picked up passenger:"
+       ;               print ?
+     ]
+     [
+       print "Bus is full"
+     ]
+   ]
 end
 
 ; sends information to all other buses
