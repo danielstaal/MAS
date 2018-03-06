@@ -60,37 +60,50 @@ to execute-actions
     if current_stop != -1 [
          ; sets 'next' as the next stop in schedule
          set next best-busstop
-     
-         ; drops off all passengers with destination equal to current_stop
-         foreach bus_passengers [
-              let passenger_id item 0 ?
-              let destination item 1 ?
-              if destination = current_stop [
-                 drop-off-passenger passenger_id
-;                 print "dropped off passenger:"
-;                 print ?
-              ]
-         ]
          
-         ; picks up all passengers at current busstop (if the bus is not full)
-         let pas_list get-passengers-at-stop current_stop
-         foreach pas_list [
-             let passenger_id item 0 ?
-             ; check if bus is full
-             ifelse length bus_passengers != get-max-passengers bus_type[
-               pick-up-passenger passenger_id
-;               print "picked up passenger:"
-;               print ?
-             ]
-             [
-               print "Bus is full"
-             ]
-          ]
+         print current_stop
+         
+         ; drop off
+         dropoff
+         ; pick up girls
+         pickup
+
          send-info
     ]
     ; travels to next busstop
     travel-to next
+end
 
+
+to dropoff
+  ;drops off all passengers with destination equal to current_stop
+  foreach bus_passengers [
+    let passenger_id item 0 ?
+    let destination item 1 ?
+    if destination = current_stop || current_stop = 3[
+      drop-off-passenger passenger_id
+      ;print "dropped off passenger:"
+      ;print ?
+    ]
+  ]
+end
+
+
+to pickup
+  ; picks up all passengers at current busstop (if the bus is not full)
+  let pas_list get-passengers-at-stop current_stop
+  foreach pas_list [
+    let passenger_id item 0 ?
+    ; check if bus is full
+    ifelse length bus_passengers != get-max-passengers bus_type[
+      pick-up-passenger passenger_id
+      ;print "picked up passenger:"
+      ;print ?
+    ]
+    [
+      print "Bus is full"
+    ]
+  ]
 end
 
 ; sends information to all other buses
@@ -172,7 +185,7 @@ to-report reward-function [ bus_stop ]
   ;show bus_stop
   ;show "reward"
   ;show reward
-  
+   
   report reward
 end
 
