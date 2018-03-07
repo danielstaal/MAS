@@ -45,7 +45,7 @@ to init-buses
   set inbox_length 0
   set central_point 3
   set number_of_buses bus_id - 24 + 1 ;number of buses in fleet, add one because of himself
-  set wait_at_central 0
+  set wait_at_central true
                
 end
 
