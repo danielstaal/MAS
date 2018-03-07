@@ -320,7 +320,9 @@ to-report most-people-waiting
   let most_people 0
   let region_counter 0
 
-  foreach [west, north, east, south] [
+  let region_list (west south east north)
+
+  foreach region_list [
     let amount 0
     let region ?
 
@@ -330,7 +332,7 @@ to-report most-people-waiting
     ]
     if amount > most_people [
       set most_people amount
-      set best-region region_counter
+      set best_region region_counter
     ]
     set region_counter region_counter + 1
   ]
