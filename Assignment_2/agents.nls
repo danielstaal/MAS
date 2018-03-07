@@ -24,7 +24,7 @@ buses-own [
   east ; bus stops in east
   north; bus stops in north
   central_point ; what is the central point where all buses start from and return to 
-  region ; the region the bus is currently driving in
+  current_region ; what region is this bus currently covering
 
 ]
  
@@ -69,6 +69,7 @@ to execute-actions
   show leasing_list
   
   open-inbox
+      
    
   if current_stop != -1 [
     ; perform actions at busstop
@@ -108,8 +109,6 @@ to drop-off-passengers-at-dam
     let passenger_id item 0 ?
     let destination item 1 ?
     drop-off-passenger passenger_id
-    
-    ; set a new direction
   ]
 end
 
@@ -165,31 +164,22 @@ to pick-up-passengers
   ]
 end
 
-; chooses a new region
+; chooses a new region (TODO: and chooses to add a new bus or not)
 to choose-direction
   let direction random 4
   if direction = 0 [
-    set region north
-    ;set next item 0 north
+    set next item 0 north
   ]
   if direction = 1 [
-    set region east
-    ;set next item 0 east
+    set next item 0 east
   ]
   if direction = 2 [
-    set region south
-    ;set next item 0 south
+    set next item 0 south
   ]
   if direction = 3 [
-    set region west
-    ;set next item 0 west
+    set next item 0 west
   ]
 end
-
-to set-next-busstop
-
-end
-
 
 ; sends information to all other buses
 to send-info
@@ -290,6 +280,7 @@ end
 to update-nr-of-buses 
   set number_of_buses number_of_buses + length leasing_list
 end
+
 
   
 
