@@ -24,7 +24,6 @@ buses-own [
   east ; bus stops in east
   north; bus stops in north
   central_point ; what is the central point where all buses start from and return to 
-  ;region ; the region the bus is currently driving in
 
 ]
  
@@ -65,9 +64,6 @@ to execute-actions
     add-bus 1
     ]
   
-  show " leasingList"
-  show leasing_list
-  
   open-inbox
    
   if current_stop != -1 [
@@ -97,22 +93,19 @@ to at-busstop
     ]
     ; should be done independently of busstop
     set-next-busstop
-    
-    show current_stop
 end
 
-; drop off passengers. First check whether at the central point or not
+; drop off all passengers regardless of their destination when at dam
 to drop-off-passengers-at-dam
   
   foreach bus_passengers [
-    
     let passenger_id item 0 ?
     let destination item 1 ?
     drop-off-passenger passenger_id
   ]
 end
 
-; drop off passengers when not at central point
+; drop off passengers with the right destination when not at central point
 to drop-off-passengers
   
   foreach bus_passengers [
@@ -128,7 +121,7 @@ to drop-off-passengers
   ]
 end
  
- 
+; if at central point, picks up passengers with destination within the newly chosen region 
 to pick-up-passengers-at-dam
   
   ; if at central point. (for now pick up any passengers without preference) TODO: pick up best combination of passengers
@@ -147,7 +140,7 @@ to pick-up-passengers-at-dam
   ]
 end
 
-; picks up passengers at busstop not the central point
+;if not the central point, picks up all passengers at busstop 
 to pick-up-passengers
   let pas_list get-passengers-at-stop current_stop
   foreach pas_list [
