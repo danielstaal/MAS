@@ -56,11 +56,14 @@ to execute-actions
   ; add a bus
   if ticks = 10 [
     show "added one bus bc of 10 ticks" 
-    add-bus 1
+    let busses n-values 20 [1]
+    foreach busses [
+      add-bus 3
     ]
+  ]
   
   open-inbox
-      
+     
    
   if current_stop != -1 [
     ; perform actions at busstop
@@ -78,24 +81,11 @@ to at-busstop
       ;set next best-busstop
       drop-off-passengers-at-dam
       send-info
-      show "at central"
-      ;if first tick bus has to stay at central because has to wait for voting outcome
-      ifelse wait_at_central = true [
-        show "first round, wait at central = true"
-        vote-for-new-bus
-        set wait_at_central false
-      ]
-      ;ELSE if second tick bus needs to get voting outcome and choose direction
-      [
-        show "SECOND round, wait at central = false"
-        let lease_new_bus get-voting-outcome
-        if lease_new_bus = 1 [
-          add-bus 1
-        ]
-        choose-direction
-        pick-up-passengers-at-dam
-        set wait_at_central true
-      ]
+      ;show "at central"
+      voting-to-add-bus
+      choose-direction
+      pick-up-passengers-at-dam
+      
     ]
     
     ; if current stop is not the central point
@@ -455,6 +445,22 @@ to-report get-voting-outcome
 
 end
 
+to voting-to-add-bus
+  ifelse wait_at_central = true [
+      show "first round, wait at central = true"
+      vote-for-new-bus
+      set wait_at_central false
+    ]
+    ;ELSE if second tick bus needs to get voting outcome and choose direction
+    [
+      show "SECOND round, wait at central = false"
+      let lease_new_bus get-voting-outcome
+      if lease_new_bus = 1 [
+        add-bus 1
+      ]
+      set wait_at_central true
+    ]
+end
 
 
 
