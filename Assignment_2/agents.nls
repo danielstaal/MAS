@@ -24,6 +24,7 @@ buses-own [
   east ; bus stops in east
   north; bus stops in north
   central_point ; what is the central point where all buses start from and return to 
+  region ; the region the bus is currently driving in
 
 ]
  
@@ -69,7 +70,7 @@ to execute-actions
   
   open-inbox
       
- 
+    ; if at a bus stop
     if current_stop != -1 [
     
        ; sets 'next' as the next stop in schedule TODO
@@ -98,7 +99,7 @@ to drop-off-passengers
       drop-off-passenger passenger_id
       
       ; set a new direction
-      at-central
+      choose-direction
     ]
   ] 
     
@@ -146,22 +147,37 @@ to pick-up-passengers
   ]
 end
 
-; chooses a new region (TODO: and chooses to add a new bus or not)
-to at-central
+; chooses a new region
+to choose-direction
   let direction random 4
   if direction = 0 [
-    set next item 0 north
+    set region north
+    ;set next item 0 north
   ]
   if direction = 1 [
-    set next item 0 east
+    set region east
+    ;set next item 0 east
   ]
   if direction = 2 [
-    set next item 0 south
+    set region south
+    ;set next item 0 south
   ]
   if direction = 3 [
-    set next item 0 west
+    set region west
+    ;set next item 0 west
   ]
 end
+
+to set-next-busstop
+   set next item 0 region
+       if current_stop != -1 [
+          ; sets 'next' as the next stop in schedule
+          if bs_counter = length bs_list 
+            [ set bs_counter 0 ]
+          set next item bs_counter bs_list
+          set bs_counter bs_counter + 1
+end
+
 
 ; sends information to all other buses
 to send-info
