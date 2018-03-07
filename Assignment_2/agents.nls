@@ -24,6 +24,7 @@ buses-own [
   east ; bus stops in east
   north; bus stops in north
   central_point ; what is the central point where all buses start from and return to 
+  wait_at_central ; whether 
   current_region ; what region is this bus currently covering. 0 = west, 1 = south, 2 = east, 3 = north
 
 ]
@@ -43,15 +44,8 @@ to init-buses
   set bus_stop_counter 0
   set inbox_length 0
   set central_point 3
-  
-  ; sends all buses that a new bus is added
-  set number_of_buses bus_id - 24 + 1 ;add one because of himself (so the last statement isnot necessary anymore)
-  ;let bus_list n-values number_of_buses [24 + ?]
-  ;foreach bus_list [
-  ;  send-message ? "bus_added"
-  ;]
-  ; increases the number of buses
-  ;set number_of_buses number_of_buses + 1
+  set number_of_buses bus_id - 24 + 1 ;number of buses in fleet, add one because of himself
+  set wait_at_central true
                
 end
 
@@ -88,9 +82,24 @@ to at-busstop
       ;set next best-busstop
       drop-off-passengers-at-dam
       send-info
-      choose-direction
-      pick-up-passengers-at-dam
-    ] 
+      
+      ;if first tick bus has to stay at central because has to wait for voting outcome
+;      if wait_at_central = true [
+;        vote-for-new-bus
+;        set wait_at_central false
+;      ]
+      
+      ;if second tick bus needs to get voting outcome and choose direction
+;      if wait_at_central = false [
+;        let lease_new_bus get-voting-outcome
+;        if lease_new_bus = 1 [
+;          add-bus 1
+;        ]
+        choose-direction
+        pick-up-passengers-at-dam
+        set wait_at_central true
+;      ]
+    ]
     
     ; if current stop is not the central point
     [
@@ -216,19 +225,23 @@ to send-info
    ]
 end
 
-; opens the inbox and reacts to different messages -> (Cindy): deze niet meer nodig nu volgens mij met die leasing list length?
+; opens the inbox and reacts to different messages
+; A message consists of a list with three parts: [ticks, sender, content]
 to open-inbox
-  ;show "inbox"
-  ;show inbox
   ; check for a new message
-  ;if length inbox > inbox_length [
-    ;let last_message last inbox
-    ; increase number of buses because of a newly added bus
-    ;if last last_message = "bus_added" [
-      ;set number_of_buses number_of_buses + 1
-      ;set inbox_length inbox_length + 1
-;    ]
-;  ]
+  if length inbox > inbox_length [
+    ; take out sender and content of the last message
+    let last_message last inbox
+    let sender item 1 last_message
+    let content last last_message
+    if content = "vote" [
+      ; decide on vote (1 = yes, 0 = no)
+      let vote-outcome is-almost-full bus_id
+      ; send message to sender with vote outcome
+      send-message sender vote-outcome
+      set inbox_length inbox_length + 1
+    ]
+  ]
 end
 
 to-report get-max-passengers [ bs_type ]
@@ -303,6 +316,34 @@ to update-nr-of-buses
   set number_of_buses number_of_buses + length leasing_list
 end
 
+to vote-for-new-bus
+  let counter number_of_buses
+  ;set buses [show n-values counter [24 -> (24 + counter)]]
+  let list_of_buses n-values number_of_buses [24 + counter]
+  show "list of buses"
+  show list_of_buses
+  ;let bus_list n-values number_of_buses [24 + ?]
+  let loopcounter 0
+  loop [
+    if loopcounter = counter [stop]
+    let bus item loopcounter list_of_buses
+    send-message bus "vote"
+    set loopcounter loopcounter + 1
+  ]
+  
+  ;foreach number_of_buses [
+   ; let bus item ? number_of_buses
+   ; send-message bus "vote"
+  ;]
+end
+
+to-report is-almost-full [bus]
+  let perc_full (length bus_passengers / get-max-passengers bus)
+  ifelse perc_full >= 70 [
+    report 1
+  ] [report 0]
+end
+
 ; report the region with the most people waiting  
 to-report most-people-waiting
 
@@ -312,11 +353,12 @@ to-report most-people-waiting
 
   let region_list (list west south east north)
 
+
   foreach region_list [
     let amount 0
     let region ?
 
-    ; count the people waiting in this region
+  ; count the people waiting in this region
     foreach region[
       set amount amount + length get-passengers-at-stop ?
     ]
@@ -361,8 +403,36 @@ to-report most-destination-region
 ;  foreach (list amount_east amount_north amount_west amount_south) [
     
   report  max (list amount_east amount_north amount_west amount_south)
-
 end
 
-
+to-report get-voting-outcome
+  ; check for a new message
+  let old_inbox_length inbox_length
+  let number_of_votes length inbox - old_inbox_length
+  let count_votes 0
+  let counter 0
+   ;for each message in inbox
+  let message_list n-values number_of_votes [?]
+  foreach message_list [
+    
+  ]
   
+  loop [
+     ;check if loop should stop (after looped through all messages)
+    if counter = number_of_votes [stop]
+     ;set message to the next item in the inbox and content to the last item in the message
+    let message item (old_inbox_length + counter) inbox
+    let content last message 
+     ;check the content, if 1 increase the votes
+    if content = 1 [set count_votes count_votes + 1]
+    set counter counter + 1
+  ]
+  set inbox_length length inbox
+   ;check the total voting outcome
+  let vote_outcome (counter / number_of_buses)
+  let treshold 0.5
+  ifelse vote_outcome > treshold [
+    report 1
+  ] [ report 0 ]
+
+end
