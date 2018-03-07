@@ -45,7 +45,7 @@ to init-buses
   set inbox_length 0
   set central_point 3
   set number_of_buses bus_id - 24 + 1 ;number of buses in fleet, add one because of himself
-  set wait_at_central true
+  set wait_at_central 0
                
 end
 
@@ -54,10 +54,10 @@ to execute-actions
   ; You are allowed to use the global variable 'ticks'.
   
   ; add a bus
-  ;if ticks = 10 [
-  ;  show "added one bus bc of 10 ticks" 
-  ;  add-bus 1
-  ;  ]
+  if ticks = 10 [
+    show "added one bus bc of 10 ticks" 
+    add-bus 1
+    ]
   
   open-inbox
       
@@ -78,23 +78,24 @@ to at-busstop
       ;set next best-busstop
       drop-off-passengers-at-dam
       send-info
-      
+      show "at central"
       ;if first tick bus has to stay at central because has to wait for voting outcome
-;      if wait_at_central = true [
-;        vote-for-new-bus
-;        set wait_at_central false
-;      ]
-      
-      ;if second tick bus needs to get voting outcome and choose direction
-;      if wait_at_central = false [
-;        let lease_new_bus get-voting-outcome
-;        if lease_new_bus = 1 [
-;          add-bus 1
-;        ]
+      ifelse wait_at_central = true [
+        show "first round, wait at central = true"
+        vote-for-new-bus
+        set wait_at_central false
+      ]
+      ;ELSE if second tick bus needs to get voting outcome and choose direction
+      [
+        show "SECOND round, wait at central = false"
+        let lease_new_bus get-voting-outcome
+        if lease_new_bus = 1 [
+          add-bus 1
+        ]
         choose-direction
         pick-up-passengers-at-dam
         set wait_at_central true
-;      ]
+      ]
     ]
     
     ; if current stop is not the central point
@@ -230,15 +231,15 @@ to open-inbox
     let content last last_message
     if content = "vote" [
       ; decide on vote (1 = yes, 0 = no)
-      let vote-outcome is-almost-full bus_id
+      let vote-outcome is-almost-full bus_type
       ; send message to sender with vote outcome
       send-message sender vote-outcome
-      set inbox_length inbox_length + 1
+      set inbox_length length inbox
     ]
   ]
 end
 
-to-report get-max-passengers [ bs_type ]
+to-report get-max-passengers [ bs_type ]  
   if bs_type = 1[
     report 12
   ]
@@ -311,31 +312,34 @@ to update-nr-of-buses
 end
 
 to vote-for-new-bus
+  show "voting.."
   let counter number_of_buses
-  ;set buses [show n-values counter [24 -> (24 + counter)]]
-  let list_of_buses n-values number_of_buses [24 + counter]
+
+  let list_of_buses n-values number_of_buses [24 + ?]
   show "list of buses"
   show list_of_buses
   ;let bus_list n-values number_of_buses [24 + ?]
-  let loopcounter 0
-  loop [
-    if loopcounter = counter [stop]
-    let bus item loopcounter list_of_buses
-    send-message bus "vote"
-    set loopcounter loopcounter + 1
+  
+  foreach list_of_buses [
+    let current_bus ?
+    if current_bus != bus_id [
+      send-message current_bus "vote"
+    show "sent message to vote"
+    ]
   ]
   
-  ;foreach number_of_buses [
-   ; let bus item ? number_of_buses
-   ; send-message bus "vote"
-  ;]
 end
 
-to-report is-almost-full [bus]
-  let perc_full (length bus_passengers / get-max-passengers bus)
-  ifelse perc_full >= 70 [
+to-report is-almost-full [bs_type]
+  let max_passengers get-max-passengers bs_type
+  let perc_full (length bus_passengers / max_passengers)
+  show "percentage full"
+  show perc_full
+  ifelse perc_full >= 0.5 [
     report 1
-  ] [report 0]
+  ] [
+  report 0
+  ]
 end
 
 ; report the region with the most people waiting  
@@ -361,10 +365,10 @@ to-report most-people-waiting
       set best_region region_counter
     ]
     
-    show "at busstop"
-    show region_counter
-    show "amount waiting"
-    show amount
+    ;show "at busstop"
+    ;show region_counter
+    ;show "amount waiting"
+    ;show amount
     
     set region_counter region_counter + 1
   ]
@@ -378,30 +382,30 @@ to-report get-voting-outcome
   let old_inbox_length inbox_length
   let number_of_votes length inbox - old_inbox_length
   let count_votes 0
-  let counter 0
-   ;for each message in inbox
+  ;for each message in inbox
   let message_list n-values number_of_votes [?]
   foreach message_list [
-    
+    ;set message to the next item in the inbox and content to the last item in the message
+    let message item (old_inbox_length + ?) inbox
+    let content last message
+    ;check the content, if 1 increase the votes
+    if content = 1 [set count_votes count_votes + 1]
   ]
   
-  loop [
-     ;check if loop should stop (after looped through all messages)
-    if counter = number_of_votes [stop]
-     ;set message to the next item in the inbox and content to the last item in the message
-    let message item (old_inbox_length + counter) inbox
-    let content last message 
-     ;check the content, if 1 increase the votes
-    if content = 1 [set count_votes count_votes + 1]
-    set counter counter + 1
-  ]
   set inbox_length length inbox
-   ;check the total voting outcome
-  let vote_outcome (counter / number_of_buses)
+  ;check the total voting outcome
+  let vote_outcome (count_votes / number_of_buses)
   let treshold 0.5
+  show "voting outcome"
   ifelse vote_outcome > treshold [
+    show vote_outcome
+    show "new bus"
     report 1
-  ] [ report 0 ]
+  ] [ 
+  show vote_outcome
+  show "no new bus"
+  report 0 
+  ]
 
 end
 
