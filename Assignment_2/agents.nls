@@ -69,79 +69,99 @@ to execute-actions
   
   open-inbox
       
- 
-    if current_stop != -1 [
-    
-       ; sets 'next' as the next stop in schedule TODO
-       ;set next best-busstop
-       drop-off-passengers
-       pick-up-passengers
-       send-info
-       
-    ]
+   
+  if current_stop != -1 [
+    ; perform actions at busstop
+    at-busstop
+
     ; travels to next busstop
     travel-to next
     update-nr-of-buses
     show "number of buses: "
     show number_of_buses
+  ]
+end
+
+to at-busstop
+    ifelse current_stop = central_point[ 
+      ;sets 'next' as the next stop in schedule TODO
+      ;set next best-busstop
+      drop-off-passengers-at-dam
+      pick-up-passengers-at-dam
+      send-info
+      choose-direction
+    ]
+    
+    ; if current stop is not the central point
+    [
+      drop-off-passengers
+      pick-up-passengers
+      send-info        
+    ]
 end
 
 ; drop off passengers. First check whether at the central point or not
+to drop-off-passengers-at-dam
+  
+  foreach bus_passengers [
+    
+    let passenger_id item 0 ?
+    let destination item 1 ?
+    drop-off-passenger passenger_id
+    
+    ; set a new direction
+    at-central
+  ]
+end
+
+; drop off passengers when not at central point
 to drop-off-passengers
   
-  ; if at the central point drop off all passengers
-  ifelse current_stop = central_point[
-    foreach bus_passengers [
-      
-      let passenger_id item 0 ?
-      let destination item 1 ?
-      drop-off-passenger passenger_id
-      
-      ; set a new direction
-      at-central
-    ]
-  ] 
+  foreach bus_passengers [
     
-  ; else if not at the central point drop off passengers with this destination
-  [ 
-    foreach bus_passengers [
-      
-      let passenger_id item 0 ?
-      let destination item 1 ?
-      ; if the passenger arrived at its destination or if the current_stop is the central point
-      if destination = current_stop[
-        drop-off-passenger passenger_id
-        ;print "dropped off passenger:"
-        ;print ?
-      ]
+    let passenger_id item 0 ?
+    let destination item 1 ?
+    ; if the passenger arrived at its destination or if the current_stop is the central point
+    if destination = current_stop[
+      drop-off-passenger passenger_id
+      ;print "dropped off passenger:"
+      ;print ?
     ]
   ]
 end
  
-; picks up passengers. different behavior when at the central point
-to pick-up-passengers
+ 
+to pick-up-passengers-at-dam
   
   ; if at central point. (for now pick up any passengers without preference) TODO: pick up best combination of passengers
-  ifelse current_stop = 1000 [
-    
-    
-    
+  let pas_list get-passengers-at-stop current_stop
+  foreach pas_list [
+    let passenger_id item 0 ?
+    ; check if bus is full
+    ifelse length bus_passengers != get-max-passengers bus_type[
+      pick-up-passenger passenger_id
+      ;print "picked up passenger:"
+      ;print ?
+    ]
+    [
+      print "Bus is full"
+    ]
   ]
-  
-  ; else if not at central point
-  [ 
-    let pas_list get-passengers-at-stop current_stop
-    foreach pas_list [
-      let passenger_id item 0 ?
-      ; check if bus is full
-      ifelse length bus_passengers != get-max-passengers bus_type[
-        pick-up-passenger passenger_id
-        ;print "picked up passenger:"
-        ;print ?
-      ]
-      [
-        print "Bus is full"
-      ]
+end
+
+; picks up passengers at busstop not the central point
+to pick-up-passengers
+  let pas_list get-passengers-at-stop current_stop
+  foreach pas_list [
+    let passenger_id item 0 ?
+    ; check if bus is full
+    ifelse length bus_passengers != get-max-passengers bus_type[
+      pick-up-passenger passenger_id
+      ;print "picked up passenger:"
+      ;print ?
+    ]
+    [
+      print "Bus is full"
     ]
   ]
 end
