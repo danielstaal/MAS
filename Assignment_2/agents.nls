@@ -25,7 +25,7 @@ buses-own [
   north; bus stops in north
   central_point ; what is the central point where all buses start from and return to 
   wait_at_central ; whether 
-  current_region ; what region is this bus currently covering. 0 = west, 1 = south, 2 = east, 3 = north
+  current_region ; what region is this bus currently covering. 0 = west, 1 = south, 2 = east, 3 = north 
 
 ]
  
@@ -185,6 +185,7 @@ to choose-direction
   let direction most-destination-region
   ;let direction random 4
   set current_region direction
+  show direction
 
   
 ;  show "chosen region"
@@ -401,7 +402,7 @@ to-report most-destination-region
     ]
   ]
   ; get the argmax of all the amounts of people going to a region
-  let highest 0
+  let highest -1
   let most_destination_region "dummy"
   let region 0
   ; 0 = west, 1 = south, 2 = east, 3 = north
