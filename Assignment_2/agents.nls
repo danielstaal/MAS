@@ -185,7 +185,7 @@ to choose-direction
   let direction most-destination-region
   ;let direction random 4
   set current_region direction
-  show direction
+;  show direction
 
   
 ;  show "chosen region"
