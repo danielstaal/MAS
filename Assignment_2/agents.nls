@@ -62,7 +62,11 @@ to execute-actions
   ; add a bus
   if ticks = 10 [
     show "added one bus bc of 10 ticks" 
-    add-bus 3
+    let busses n-values 20 [1]
+    foreach busses [
+      add-bus 3
+    ]            
+            
     ]
   
   open-inbox
@@ -136,8 +140,8 @@ to pick-up-passengers-at-dam
       ; only pick up if destination is in region
       if member? destination bus_stop_list [
         pick-up-passenger passenger_id
-        print "picked up passenger:"
-        print ?
+;        print "picked up passenger:"
+;        print ?
       ]
     ]
     [
@@ -168,11 +172,13 @@ end
 ; chooses a new region (TODO: and chooses to add a new bus or not)
 to choose-direction
   ; choose the direction with most people waiting
-  let direction most-people-waiting
+;  let direction most-people-waiting
+  let direction random 4
   set current_region direction
+  let bla most-destination-region
   
-  show "chosen region"
-  show current_region
+;  show "chosen region"
+;  show current_region
   
   if direction = 0 [
     set bus_stop_list west
@@ -319,40 +325,44 @@ to-report most-people-waiting
       set best_region region_counter
     ]
     
-    show "at busstop"
-    show region_counter
-    show "amount waiting"
-    show amount
+;    show "at busstop"
+;    show region_counter
+;    show "amount waiting"
+;    show amount
     
     set region_counter region_counter + 1
   ]
   report best_region
 end
 
+; report the region with the most people traveling destinations
+to-report most-destination-region
+  let pass get-passengers-at-stop central_point
+  let amount_east 0  
+  let amount_north 0
+  let amount_west 0
+  let amount_south 0
+  foreach pass [
+    let destination item 1 ?
+    if member? destination east [
+      set amount_east amount_east + 1
+    ]
+    if member? destination north [
+      set amount_north amount_north + 1
+    ]
+    if member? destination west [
+      set amount_west amount_west + 1
+    ]
+    if member? destination south [
+      set amount_south amount_south + 1
+    ]
+  ]
+;  let highest bla
+;  foreach (list amount_east amount_north amount_west amount_south) [
+    
+  report  max (list amount_east amount_north amount_west amount_south)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+end
 
 
   
