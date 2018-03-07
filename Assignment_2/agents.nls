@@ -61,7 +61,16 @@ to execute-actions
   ; add a bus
   if ticks = 10 [
     show "added one bus bc of 10 ticks" 
-    add-bus 1
+    add-bus 3
+        add-bus 3
+            add-bus 3
+                add-bus 3
+                    add-bus 3
+                        add-bus 3
+                            add-bus 3
+                                add-bus 3
+                                    add-bus 3
+                                        add-bus 3
     ]
   
   open-inbox
@@ -83,8 +92,7 @@ to at-busstop
       send-info
       choose-direction
       pick-up-passengers-at-dam
-    ]
-    
+    ] 
     ; if current stop is not the central point
     [
       drop-off-passengers
@@ -124,18 +132,22 @@ end
 ; if at central point, picks up passengers with destination within the newly chosen region 
 to pick-up-passengers-at-dam
   
-  ; if at central point. (for now pick up any passengers without preference) TODO: pick up best combination of passengers
   let pas_list get-passengers-at-stop current_stop
   foreach pas_list [
     let passenger_id item 0 ?
-    ; check if bus is full
-    ifelse length bus_passengers != get-max-passengers bus_type[
-      pick-up-passenger passenger_id
-      ;print "picked up passenger:"
-      ;print ?
+    let destination item 1 ?
+    ; only pick up when bus is not full
+    ifelse length bus_passengers != get-max-passengers bus_type [
+      ; only pick up if destination is in region
+      if member? destination bus_stop_list [
+        pick-up-passenger passenger_id
+        print "picked up passenger:"
+        print ?
+      ]
     ]
     [
-      print "Bus is full"
+      ; break out of function and not try to pick up more passengers
+      stop
     ]
   ]
 end
@@ -152,7 +164,8 @@ to pick-up-passengers
       ;print ?
     ]
     [
-      print "Bus is full"
+      ; break out of function and not try to pick up more passengers
+      stop
     ]
   ]
 end
