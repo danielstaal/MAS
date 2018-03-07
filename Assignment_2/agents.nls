@@ -63,15 +63,6 @@ to execute-actions
   if ticks = 10 [
     show "added one bus bc of 10 ticks" 
     add-bus 3
-        add-bus 3
-            add-bus 3
-                add-bus 3
-                    add-bus 3
-                        add-bus 3
-                            add-bus 3
-                                add-bus 3
-                                    add-bus 3
-                                        add-bus 3
     ]
   
   open-inbox
