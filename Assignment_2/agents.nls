@@ -181,10 +181,11 @@ end
 ; chooses a new region (TODO: and chooses to add a new bus or not)
 to choose-direction
   ; choose the direction with most people waiting
-;  let direction most-people-waiting
-  let direction random 4
+  let bla most-people-waiting
+  let direction most-destination-region
+  ;let direction random 4
   set current_region direction
-  let bla most-destination-region
+
   
 ;  show "chosen region"
 ;  show current_region
@@ -193,10 +194,10 @@ to choose-direction
     set bus_stop_list west
   ]
   if direction = 1 [
-    set bus_stop_list east
+    set bus_stop_list south
   ]
   if direction = 2 [
-    set bus_stop_list south
+    set bus_stop_list east
   ]
   if direction = 3 [
     set bus_stop_list north
@@ -399,10 +400,26 @@ to-report most-destination-region
       set amount_south amount_south + 1
     ]
   ]
-;  let highest bla
-;  foreach (list amount_east amount_north amount_west amount_south) [
-    
-  report  max (list amount_east amount_north amount_west amount_south)
+  ; get the argmax of all the amounts of people going to a region
+  let highest 0
+  let most_destination_region "dummy"
+  let region 0
+  ; 0 = west, 1 = south, 2 = east, 3 = north
+  foreach (list amount_west amount_south amount_east amount_north) [
+    if highest < ? [
+      set highest ?
+      set most_destination_region region
+    ]
+  set region region + 1
+  
+;  show " amount in region"
+;  show ?
+;  show "highest"
+;  show highest
+;  show "most_destination_region"
+;  show most_destination_region
+  ]
+  report most_destination_region
 end
 
 to-report get-voting-outcome
