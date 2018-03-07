@@ -14,11 +14,17 @@ buses-own [
   ; You can create any new local variable you want. Just declare them here.
   
 
-  bs_list   ; list of bus stops where the bus will go
+  ;bs_list   ; list of bus stops where the bus will go
   bs_counter   ; ID of where the bus currently is in its schedule
   next ; TODO might be unnecessary 
   number_of_buses
   inbox_length ; length of the inbox
+  west ; bus stops in west
+  south ; bus stops in south
+  east ; bus stops in east
+  north; bus stops in north
+  central_point ; what is the central point where all buses start from and return to 
+
 ]
  
 globals [graph]
@@ -28,19 +34,23 @@ to init-buses
 
   ; This list contains the topology of the entire network of bus stops, which is known to all agents. You can use this, for instance, to calculate the shortest path between two bus stops.
   set graph [[22 15 14] [11 19 23 7] [8] [16 4 20 9] [3 5 10] [4 16 10 17] [8] [1 17 13] [2 6 9] [3 8 20] [4 5 17 13 21] [1 16 17] [20 15 22] [7 10 22 23] [0 23] [0 12 18] [3 5 11] [5 7 10 11] [15] [1 23] [3 9 12 21] [10 20 22] [0 12 13 21] [1 13 14 19]]
-
-  set bs_list [4 5 16 11 17 10 13 7 1 19 23 14 0 15 18 15 12 22 21 20 9 8 2 6 8 9 3]  ; List containing the schedule of the bus in bus_stop IDs (set bs_list n-values 24 [?] doesn't work since not all busstops are adjecent.)
+  set west [4 5 16 11 17 10 4 3] ; centraal, dam, everts, sloter, lely, suri, leidse, dam, centraal
+  set south [4 10 13 7 1 19 23 14 0 22 21 3] ; centraal, dam leidse, suriname, haarlem, amstelveense, vu, zuid, rai, amstel, wibaut, weesp, waterloo, centraal]
+  set east [20 21 22 0 15 18 15 12 20 3] ; centraal, waterl, weesp, wibaut, amstel, sciencep, uva, sciencep, muider, waterl, centraal
+  set north [9 8 6 8 2 8 9 3] ; centraal, hendrik, hasselt, flora, hasselt, buiksloter, hasselt, hendrik, centr
+  ;set bs_list [4 5 16 11 17 10 13 7 1 19 23 14 0 15 18 15 12 22 21 20 9 8 2 6 8 9 3]  ; List containing the schedule of the bus in bus_stop IDs (set bs_list n-values 24 [?] doesn't work since not all busstops are adjecent.)
   set bs_counter 0
   set inbox_length 0
+  set central_point 3
   
   ; sends all buses that a new bus is added
-  set number_of_buses bus_id - 24
-  let bus_list n-values number_of_buses [24 + ?]
-  foreach bus_list [
-    send-message ? "bus_added"
-  ]
+  set number_of_buses bus_id - 24 + 1 ;add one because of himself (so the last statement isnot necessary anymore)
+  ;let bus_list n-values number_of_buses [24 + ?]
+  ;foreach bus_list [
+  ;  send-message ? "bus_added"
+  ;]
   ; increases the number of buses
-  set number_of_buses number_of_buses + 1
+  ;set number_of_buses number_of_buses + 1
                
 end
 
@@ -50,59 +60,106 @@ to execute-actions
   
   ; add a bus
   if ticks = 10 [
-    print "added one bus" 
+    show "added one bus bc of 10 ticks" 
     add-bus 1
     ]
   
+  show " leasingList"
+  show leasing_list
+  
   open-inbox
       
-    ; if the bus is at a stop, it has to change 'next', drop off all passengers with destination equal to 'current_stop', and pick up all passengers. 
+ 
     if current_stop != -1 [
-         ; sets 'next' as the next stop in schedule
-         set next best-busstop
-         
-         print current_stop
-         
-         ; drop off
-         dropoff
-         ; pick up girls
-         pickup
-
-         send-info
+    
+       ; sets 'next' as the next stop in schedule TODO
+       ;set next best-busstop
+       drop-off-passengers
+       pick-up-passengers
+       send-info
+       
     ]
     ; travels to next busstop
     travel-to next
+    update-nr-of-buses
+    show "number of buses: "
+    show number_of_buses
 end
 
-
-to dropoff
-  ;drops off all passengers with destination equal to current_stop
-  foreach bus_passengers [
-    let passenger_id item 0 ?
-    let destination item 1 ?
-    if destination = current_stop || current_stop = 3[
+; drop off passengers. First check whether at the central point or not
+to drop-off-passengers
+  
+  ; if at the central point drop off all passengers
+  ifelse current_stop = central_point[
+    foreach bus_passengers [
+      
+      let passenger_id item 0 ?
+      let destination item 1 ?
       drop-off-passenger passenger_id
-      ;print "dropped off passenger:"
-      ;print ?
+      
+      ; set a new direction
+      at-central
+    ]
+  ] 
+    
+  ; else if not at the central point drop off passengers with this destination
+  [ 
+    foreach bus_passengers [
+      
+      let passenger_id item 0 ?
+      let destination item 1 ?
+      ; if the passenger arrived at its destination or if the current_stop is the central point
+      if destination = current_stop[
+        drop-off-passenger passenger_id
+        ;print "dropped off passenger:"
+        ;print ?
+      ]
+    ]
+  ]
+end
+ 
+; picks up passengers. different behavior when at the central point
+to pick-up-passengers
+  
+  ; if at central point. (for now pick up any passengers without preference) TODO: pick up best combination of passengers
+  ifelse current_stop = 1000 [
+    
+    
+    
+  ]
+  
+  ; else if not at central point
+  [ 
+    let pas_list get-passengers-at-stop current_stop
+    foreach pas_list [
+      let passenger_id item 0 ?
+      ; check if bus is full
+      ifelse length bus_passengers != get-max-passengers bus_type[
+        pick-up-passenger passenger_id
+        ;print "picked up passenger:"
+        ;print ?
+      ]
+      [
+        print "Bus is full"
+      ]
     ]
   ]
 end
 
-
-to pickup
-  ; picks up all passengers at current busstop (if the bus is not full)
-  let pas_list get-passengers-at-stop current_stop
-  foreach pas_list [
-    let passenger_id item 0 ?
-    ; check if bus is full
-    ifelse length bus_passengers != get-max-passengers bus_type[
-      pick-up-passenger passenger_id
-      ;print "picked up passenger:"
-      ;print ?
-    ]
-    [
-      print "Bus is full"
-    ]
+; chooses a new region (TODO: and chooses to add a new bus or not)
+to at-central
+  let direction random 4
+  if direction = 0 [
+    set next item 0 north
+  ]
+  if direction = 1 [
+    set next item 0 east
+  ]
+  if direction = 2 [
+    set next item 0 south
+  ]
+  if direction = 3 [
+    set next item 0 west
   ]
 end
 
@@ -119,19 +176,19 @@ to send-info
    ]
 end
 
-; opens the inbox and reacts to different messages
+; opens the inbox and reacts to different messages -> (Cindy): deze niet meer nodig nu volgens mij met die leasing list length?
 to open-inbox
   ;show "inbox"
   ;show inbox
   ; check for a new message
-  if length inbox > inbox_length [
-    let last_message last inbox
+  ;if length inbox > inbox_length [
+    ;let last_message last inbox
     ; increase number of buses because of a newly added bus
-    if last last_message = "bus_added" [
-      set number_of_buses number_of_buses + 1
-      set inbox_length inbox_length + 1
-    ]
-  ]
+    ;if last last_message = "bus_added" [
+      ;set number_of_buses number_of_buses + 1
+      ;set inbox_length inbox_length + 1
+;    ]
+;  ]
 end
 
 to-report get-max-passengers [ bs_type ]
@@ -196,13 +253,17 @@ to-report get-no-destinations [ bus_stop ]
       set counter counter + 1
     ]
   ]  
-  show "counter"
-  show bus_stop
-  show counter
+  ;show "counter"
+  ;show bus_stop
+  ;show counter
   report counter
 end  
 
+to update-nr-of-buses 
+  set number_of_buses number_of_buses + length leasing_list
+end
 
+  
 
 
 
