@@ -36,7 +36,7 @@ to init-buses
   ; This list contains the topology of the entire network of bus stops, which is known to all agents. You can use this, for instance, to calculate the shortest path between two bus stops.
   set graph [[22 15 14] [11 19 23 7] [8] [16 4 20 9] [3 5 10] [4 16 10 17] [8] [1 17 13] [2 6 9] [3 8 20] [4 5 17 13 21] [1 16 17] [20 15 22] [7 10 22 23] [0 23] [0 12 18] [3 5 11] [5 7 10 11] [15] [1 23] [3 9 12 21] [10 20 22] [0 12 13 21] [1 13 14 19]]
   set west [4 5 16 11 17 10 4 3] ; centraal, dam, everts, sloter, lely, suri, leidse, dam, centraal
-  set south [4 10 13 7 1 19 23 14 0 22 21 20 3] ; centraal, dam leidse, suriname, haarlem, amstelveense, vu, zuid, rai, amstel, wibaut, weesp, waterloo, dam, centraal]
+  set south [4 10 13 7 1 19 23 14 0 22 21 3] ; centraal, dam leidse, suriname, haarlem, amstelveense, vu, zuid, rai, amstel, wibaut, weesp, waterloo, centraal]
   set east [20 21 22 0 15 18 15 12 20 3] ; centraal, waterl, weesp, wibaut, amstel, sciencep, uva, sciencep, muider, waterl, centraal
   set north [9 8 6 8 2 8 9 3] ; centraal, hendrik, hasselt, flora, hasselt, buiksloter, hasselt, hendrik, centr
   ;set bs_list [4 5 16 11 17 10 13 7 1 19 23 14 0 15 18 15 12 22 21 20 9 8 2 6 8 9 3]  ; List containing the schedule of the bus in bus_stop IDs (set bs_list n-values 24 [?] doesn't work since not all busstops are adjecent.)
@@ -74,9 +74,13 @@ to execute-actions
   if current_stop != -1 [
     ; perform actions at busstop
     at-busstop
-  ]
+
+    ; travels to next busstop
     travel-to next
     update-nr-of-buses
+    show "number of buses: "
+    show number_of_buses
+  ]
 end
 
 to at-busstop
@@ -84,10 +88,9 @@ to at-busstop
       ;sets 'next' as the next stop in schedule TODO
       ;set next best-busstop
       drop-off-passengers-at-dam
-
+      pick-up-passengers-at-dam
       send-info
       choose-direction
-      pick-up-passengers-at-dam
     ]
     
     ; if current stop is not the central point
@@ -96,10 +99,6 @@ to at-busstop
       pick-up-passengers
       send-info        
     ]
-    ; should be done independently of busstop
-    set-next-busstop
-    
-    show current_stop
 end
 
 ; drop off passengers. First check whether at the central point or not
@@ -184,7 +183,7 @@ to choose-direction
   set bus_stop_counter 0
 end
 
-; sets 'next' as the next stop in bus_stop_list (schedule)
+; sets 'next' as the next stop in schedule
 to set-next-busstop
     set next item bus_stop_counter bus_stop_list
     set bus_stop_counter bus_stop_counter + 1
@@ -321,7 +320,7 @@ to-report most-people-waiting
   let most_people 0
   let region_counter 0
 
-  let region_list (west south east north)
+  let region_list (list west south east north)
 
   foreach region_list [
     let amount 0
@@ -336,6 +335,9 @@ to-report most-people-waiting
       set best_region region_counter
     ]
     set region_counter region_counter + 1
+    
+    show region
+    show amount
   ]
   report best_region
 end
