@@ -64,7 +64,6 @@ to execute-actions
   
   open-inbox
      
-   
   if current_stop != -1 [
     ; perform actions at busstop
     at-busstop
@@ -77,8 +76,6 @@ end
 
 to at-busstop
     ifelse current_stop = central_point[ 
-      ;sets 'next' as the next stop in schedule TODO
-      ;set next best-busstop
       drop-off-passengers-at-dam
       send-info
       ;show "at central"
@@ -94,7 +91,7 @@ to at-busstop
       pick-up-passengers
       send-info        
     ]
-    ; should be done independently of busstop
+    ; if task is independently of busstop
     set-next-busstop
 end
 
@@ -136,8 +133,8 @@ to pick-up-passengers-at-dam
       ; only pick up if destination is in region
       if member? destination bus_stop_list [
         pick-up-passenger passenger_id
-        print "picked up passenger:"
-        print ?
+;        print "picked up passenger:"
+;        print ?
       ]
     ]
     [
