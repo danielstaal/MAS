@@ -165,10 +165,10 @@ to pick-up-passengers
   ]
 end
 
-; chooses a new region (TODO: and chooses to add a new bus or not)
+; chooses a new region
 to choose-direction
   ; choose the direction with most people waiting
-  let direction most-people-waiting
+  let direction most-destination-region
   set current_region direction
 ;  show direction
 
@@ -180,10 +180,10 @@ to choose-direction
     set bus_stop_list west
   ]
   if direction = 1 [
-    set bus_stop_list east
+    set bus_stop_list south
   ]
   if direction = 2 [
-    set bus_stop_list south
+    set bus_stop_list east
   ]
   if direction = 3 [
     set bus_stop_list north
@@ -461,30 +461,3 @@ to voting-to-add-bus
       set wait_at_central true
     ]
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
