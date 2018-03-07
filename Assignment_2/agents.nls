@@ -25,7 +25,7 @@ buses-own [
   north; bus stops in north
   central_point ; what is the central point where all buses start from and return to 
   wait_at_central ; whether 
-  current_region ; what region is this bus currently covering. 0 = west, 1 = south, 2 = east, 3 = north
+  current_region ; what region is this bus currently covering. 0 = west, 1 = south, 2 = east, 3 = north 
 
 ]
  
@@ -180,6 +180,8 @@ to choose-direction
   ; choose the direction with most people waiting
   let direction most-people-waiting
   set current_region direction
+  show direction
+
   
   show "chosen region"
   show current_region
@@ -375,6 +377,50 @@ to-report most-people-waiting
   report best_region
 end
 
+
+; report the region with the most people traveling destinations
+to-report most-destination-region
+  let pass get-passengers-at-stop central_point
+  let amount_east 0  
+  let amount_north 0
+  let amount_west 0
+  let amount_south 0
+  foreach pass [
+    let destination item 1 ?
+    if member? destination east [
+      set amount_east amount_east + 1
+    ]
+    if member? destination north [
+      set amount_north amount_north + 1
+    ]
+    if member? destination west [
+      set amount_west amount_west + 1
+    ]
+    if member? destination south [
+      set amount_south amount_south + 1
+    ]
+  ]
+  ; get the argmax of all the amounts of people going to a region
+  let highest -1
+  let most_destination_region "dummy"
+  let region 0
+  ; 0 = west, 1 = south, 2 = east, 3 = north
+  foreach (list amount_west amount_south amount_east amount_north) [
+    if highest < ? [
+      set highest ?
+      set most_destination_region region
+    ]
+  set region region + 1
+  
+;  show " amount in region"
+;  show ?
+;  show "highest"
+;  show highest
+;  show "most_destination_region"
+;  show most_destination_region
+  ]
+  report most_destination_region
+end
 
 
 to-report get-voting-outcome
