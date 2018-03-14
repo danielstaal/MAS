@@ -1,3 +1,7 @@
+;---------------------------------
+; code written by Daniël Staal, Cindy Allis & Sierk Kanis
+;---------------------------------
+
 buses-own [
   ; Static, read-only variables. These values never change. You can read them, but you cannot change them.
   bus_id          ; The ID of a given agent (bus). Each agent has a unique ID.
@@ -49,27 +53,31 @@ to init-buses
                
 end
 
+; ------------------- main functions --------------------------
+
 to execute-actions
-  ; Add decision making strategies for your agents here.
-  ; You are allowed to use the global variable 'ticks'.
   
-  ; add a bus
+  ; add starting buses
   if ticks = 10 [
     show "added one bus bc of 10 ticks" 
-    let busses n-values 20 [1]
+    let busses n-values 4 [1]
     foreach busses [
       add-bus 3
     ]
   ]
   
+  ; opens the inbox every tick and decides what to do based on the first word in the message
   open-inbox
-     
+
+  ; perform all actions that should be done when at a busstop
   if current_stop != -1 [
-    ; perform actions at busstop
     at-busstop
   ]
+  
   ; travels to next busstop
   travel-to next
+  
+  ; checks whether new buses are added and updates nr of buses
   update-nr-of-buses
 
 end
@@ -94,6 +102,8 @@ to at-busstop
     ; if task is independently of busstop
     set-next-busstop
 end
+
+; ------------------- pick up and drop off functions --------------------------
 
 ; drop off all passengers regardless of their destination when at dam
 to drop-off-passengers-at-dam
@@ -162,39 +172,7 @@ to pick-up-passengers
   ]
 end
 
-; chooses a new region
-to choose-direction
-  ; choose the direction with most people waiting
-  let direction most-destination-region
-  set current_region direction
-;  show direction
-
-  
-  show "chosen region"
-  show current_region
-  
-  if direction = 0 [
-    set bus_stop_list west
-  ]
-  if direction = 1 [
-    set bus_stop_list south
-  ]
-  if direction = 2 [
-    set bus_stop_list east
-  ]
-  if direction = 3 [
-    set bus_stop_list north
-  ]
-  ; resets the bus stop counter
-  set bus_stop_counter 0
-end
-
-; sets 'next' as the next stop in schedule
-to set-next-busstop
-    set next item bus_stop_counter bus_stop_list
-    set bus_stop_counter bus_stop_counter + 1
-end
-
+; ------------------- message functions --------------------------
 
 ; sends information to all other buses
 to send-info
@@ -228,107 +206,33 @@ to open-inbox
   ]
 end
 
-to-report get-max-passengers [ bs_type ]  
-  if bs_type = 1[
-    report 12
+; ------------------- choose direction functions --------------------------
+
+; chooses a new region
+to choose-direction
+  ; choose the direction with most people waiting
+  let direction most-destination-region
+  set current_region direction
+;  show direction
+
+  
+;  show "chosen region"
+;  show current_region
+  
+  if direction = 0 [
+    set bus_stop_list west
   ]
-  if bs_type = 2[
-    report 60
+  if direction = 1 [
+    set bus_stop_list south
   ]
-  if bs_type = 3[
-    report 150
+  if direction = 2 [
+    set bus_stop_list east
   ]
-end
-
-; retrieve best next stop
-to-report best-busstop
-  let best_busstop 0
-  let highest_reward -1000
-  
-  ; index in for loop
-  let i 0
-  let reward 0
-  ; for each possible busstop calculate the rewardfunction
-  foreach item current_stop graph[
-    ; retrieve the busstop to be compared
-    let compared_busstop item i item current_stop graph
-    ; calculate the reward
-    set reward reward-function(compared_busstop)
-    if reward > highest_reward [
-      set highest_reward reward
-      set best_busstop compared_busstop
-    ]
-    set i i + 1
+  if direction = 3 [
+    set bus_stop_list north
   ]
-  report best_busstop
-  
-end
-
-to-report reward-function [ bus_stop ] 
-  let reward 0
-  
-  ; calculate different features
-  let dist get-distance current_stop bus_stop
-  let no_of_people_waiting length get-passengers-at-stop bus_stop
-  let no_of_people_destination get-no-destinations bus_stop
-  
-  ; calculate reward
-  set reward (- dist + no_of_people_waiting + no_of_people_destination)
-  
-  ;show "busstop"
-  ;show bus_stop
-  ;show "reward"
-  ;show reward
-   
-  report reward
-end
-
-to-report get-no-destinations [ bus_stop ]
-  let counter 0
-  foreach bus_passengers [
-    if item 1 ? = bus_stop[
-      set counter counter + 1
-    ]
-  ]  
-  ;show "counter"
-  ;show bus_stop
-  ;show counter
-  report counter
-end  
-
-to update-nr-of-buses 
-  set number_of_buses number_of_buses + length leasing_list
-end
-
-to vote-for-new-bus
-  show "voting.."
-  let counter number_of_buses
-
-  let list_of_buses n-values number_of_buses [24 + ?]
-  show "list of buses"
-  show list_of_buses
-  ;let bus_list n-values number_of_buses [24 + ?]
-  
-  foreach list_of_buses [
-    let current_bus ?
-    if current_bus != bus_id [
-      send-message current_bus "vote"
-    show "sent message to vote"
-    ]
-  ]
-  
-end
-
-to-report is-almost-full [bs_type]
-  let max_passengers get-max-passengers bs_type
-  let perc_full (length bus_passengers / max_passengers)
-  show "percentage full"
-  show perc_full
-  ifelse perc_full >= 0.5 [
-    report 1
-  ] [
-  report 0
-  ]
+  ; resets the bus stop counter
+  set bus_stop_counter 0
 end
 
 ; report the region with the most people waiting  
@@ -363,7 +267,6 @@ to-report most-people-waiting
   ]
   report best_region
 end
-
 
 ; report the region with the most people traveling destinations
 to-report most-destination-region
@@ -409,7 +312,9 @@ to-report most-destination-region
   report most_destination_region
 end
 
+; ------------------- add-bus functions --------------------------
 
+; TODO, everything that has something to do with inbox should be in the 'inbox' function
 to-report get-voting-outcome
   ; check for a new message
   let old_inbox_length inbox_length
@@ -457,4 +362,141 @@ to voting-to-add-bus
       ]
       set wait_at_central true
     ]
+end
+
+; asks all the buses to vote
+to vote-for-new-bus
+  show "voting.."
+  let counter number_of_buses
+
+  let list_of_buses n-values number_of_buses [24 + ?]
+  show "list of buses"
+  show list_of_buses
+  ;let bus_list n-values number_of_buses [24 + ?]
+  
+  foreach list_of_buses [
+    let current_bus ?
+    if current_bus != bus_id [
+      send-message current_bus "vote"
+    show "sent message to vote"
+    ]
+  ]
+end
+
+to-report is-almost-full [bs_type]
+  let max_passengers get-max-passengers bs_type
+  let perc_full (length bus_passengers / max_passengers)
+  show "percentage full"
+  show perc_full
+  ifelse perc_full >= 0.5 [
+    report 1
+  ] [
+  report 0
+  ]
+end
+
+; ------------------- value functions --------------------------
+
+to-report reward-function [ bus_stop ] 
+  let reward 0
+  
+  ; calculate different features
+  let dist get-distance current_stop bus_stop
+  let no_of_people_waiting length get-passengers-at-stop bus_stop
+  let no_of_people_destination get-no-destinations bus_stop
+  
+  ; calculate reward
+  set reward (- dist + no_of_people_waiting + no_of_people_destination)
+  
+  ;show "busstop"
+  ;show bus_stop
+  ;show "reward"
+  ;show reward
+   
+  report reward
+end
+
+
+; ------------------- helper functions --------------------------
+
+; uses the leasing_list to see if new buses are added
+to update-nr-of-buses 
+  set number_of_buses number_of_buses + length leasing_list
+end
+
+; sets 'next' as the next stop in schedule
+to set-next-busstop
+    set next item bus_stop_counter bus_stop_list
+    set bus_stop_counter bus_stop_counter + 1
+end
+
+; reports the maximum capacity of given bustype
+to-report get-max-passengers [ bs_type ]  
+  if bs_type = 1[
+    report 12
+  ]
+  if bs_type = 2[
+    report 60
+  ]
+  if bs_type = 3[
+    report 150
+  ]
+end
+
+; TODO What does this function do?
+to-report get-no-destinations [ bus_stop ]
+  let counter 0
+  foreach bus_passengers [
+    if item 1 ? = bus_stop[
+      set counter counter + 1
+    ]
+  ]  
+  ;show "counter"
+  ;show bus_stop
+  ;show counter
+  report counter
+end  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+; NOT USED
+; retrieve best next stop
+to-report best-busstop
+  let best_busstop 0
+  let highest_reward -1000
+  
+  ; index in for loop
+  let i 0
+  let reward 0
+  ; for each possible busstop calculate the rewardfunction
+  foreach item current_stop graph[
+    ; retrieve the busstop to be compared
+    let compared_busstop item i item current_stop graph
+    ; calculate the reward
+    set reward reward-function(compared_busstop)
+    if reward > highest_reward [
+      set highest_reward reward
+      set best_busstop compared_busstop
+    ]
+    set i i + 1
+  ]
+  report best_busstop
+  
 end
