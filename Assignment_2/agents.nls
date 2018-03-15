@@ -29,8 +29,9 @@ buses-own [
   north; bus stops in north
   central_point ; what is the central point where all buses start from and return to 
   wait_at_central ; whether 
-  current_region ; what region is this bus currently covering. 0 = west, 1 = south, 2 = east, 3 = north 
-
+  current_region ; what region is this bus currently covering. 0 = west, 1 = south, 2 = east, 3 = north
+  last_region  ; the region the bus was traveling before
+  buses_per_region ; list of the amount of buses per region, without itself
 ]
  
 globals [graph]
@@ -50,6 +51,10 @@ to init-buses
   set central_point 3
   set number_of_buses bus_id - 24 + 1 ;number of buses in fleet, add one because of himself
   set wait_at_central true
+  set buses_per_region [0 0 0 0]
+  set last_region 5 ; 5 is the default value if it doesn't have a region yet.
+  set current_region 5
+  send-info-when-added
                
 end
 
@@ -60,7 +65,7 @@ to execute-actions
   ; add starting buses
   if ticks = 10 [
     show "added one bus bc of 10 ticks" 
-    let busses n-values 4 [1]
+    let busses n-values 40 [1]
     foreach busses [
       add-bus 3
     ]
@@ -76,28 +81,22 @@ to execute-actions
   
   ; travels to next busstop
   travel-to next
-  
-  ; checks whether new buses are added and updates nr of buses
-  update-nr-of-buses
-
 end
 
 to at-busstop
+   ; if current stop is the central point
     ifelse current_stop = central_point[ 
       drop-off-passengers-at-dam
-      send-info
-      ;show "at central"
-      voting-to-add-bus
+     ; voting-to-add-bus
       choose-direction
+      ; sends direction to everyone
+      send-info-at-dam
       pick-up-passengers-at-dam
-      
-    ]
-    
+    ] 
     ; if current stop is not the central point
     [
       drop-off-passengers
-      pick-up-passengers
-      send-info        
+      pick-up-passengers      
     ]
     ; if task is independently of busstop
     set-next-busstop
@@ -107,7 +106,6 @@ end
 
 ; drop off all passengers regardless of their destination when at dam
 to drop-off-passengers-at-dam
-  
   foreach bus_passengers [
     let passenger_id item 0 ?
     let destination item 1 ?
@@ -117,23 +115,18 @@ end
 
 ; drop off passengers with the right destination when not at central point
 to drop-off-passengers
-  
   foreach bus_passengers [
-    
     let passenger_id item 0 ?
     let destination item 1 ?
-    ; if the passenger arrived at its destination or if the current_stop is the central point
+    ; if the passenger has arrived at its destination
     if destination = current_stop[
       drop-off-passenger passenger_id
-      ;print "dropped off passenger:"
-      ;print ?
     ]
   ]
 end
  
 ; if at central point, picks up passengers with destination within the newly chosen region 
 to pick-up-passengers-at-dam
-  
   let pas_list get-passengers-at-stop current_stop
   foreach pas_list [
     let passenger_id item 0 ?
@@ -143,12 +136,10 @@ to pick-up-passengers-at-dam
       ; only pick up if destination is in region
       if member? destination bus_stop_list [
         pick-up-passenger passenger_id
-;        print "picked up passenger:"
-;        print ?
       ]
     ]
     [
-      ; break out of function and not try to pick up more passengers
+      ; if bus if full break out of function and stop picking up passengers
       stop
     ]
   ]
@@ -159,14 +150,12 @@ to pick-up-passengers
   let pas_list get-passengers-at-stop current_stop
   foreach pas_list [
     let passenger_id item 0 ?
-    ; check if bus is full
+    ; only pick up when bus is not full
     ifelse length bus_passengers != get-max-passengers bus_type[
       pick-up-passenger passenger_id
-      ;print "picked up passenger:"
-      ;print ?
     ]
     [
-      ; break out of function and not try to pick up more passengers
+      ; if bus if full break out of function and stop picking up passengers
       stop
     ]
   ]
@@ -175,13 +164,26 @@ end
 ; ------------------- message functions --------------------------
 
 ; sends information to all other buses
-to send-info
+to send-info-at-dam
    let bus_list n-values number_of_buses [24 + ?]
    foreach bus_list [
      if bus_id != ? [
-       ; sends a string combining amount of passengers in bus and next stop
-       let messagestart word length bus_passengers " "
-       let message word messagestart next
+       ; sends a string with protecol "0" and it's last and current region, example: "031"
+       let messagestart word "0" last_region
+       let message word messagestart current_region
+       ; TODO add Cindy's vote as well.
+       send-message ? message
+     ]
+   ]
+end
+
+; sends information to all other buses
+to send-info-when-added
+   let bus_list n-values number_of_buses [24 + ?]
+   foreach bus_list [
+     if bus_id != ? [
+       ; sends a string with protecol "1" which means a bus is added
+       let message "1"
        send-message ? message
      ]
    ]
@@ -190,93 +192,91 @@ end
 ; opens the inbox and reacts to different messages
 ; A message consists of a list with three parts: [ticks, sender, content]
 to open-inbox
-  ; check for a new message
-  if length inbox > inbox_length [
-    ; take out sender and content of the last message
-    let last_message last inbox
-    let sender item 1 last_message
-    let content last last_message
+  ; check for all new messages
+  let amount_of_new_messages length inbox - inbox_length
+  let forloop n-values amount_of_new_messages [?]
+  foreach forloop [
+    ; split up the message in parts
+    let message_id inbox_length + ?
+    let message item message_id inbox
+    let sender item 1 message
+    let content last message
+    
     if content = "vote" [
       ; decide on vote (1 = yes, 0 = no)
       let vote-outcome is-almost-full bus_type
       ; send message to sender with vote outcome
       send-message sender vote-outcome
-      set inbox_length length inbox
+    ]
+
+    ; for # of buses update
+    if item 0 content = "1" [
+      set number_of_buses number_of_buses + 1
+    ]
+    
+    ; for # buses per region update
+    if item 0 content = "0" [
+      let last_reg item 1 content
+      let cur_reg item 2 content
+      ; decreases the region the bus was traveling in before (if it had a last_region, otherwise 5)
+      if read-from-string last_reg != 5 [
+        let current_amount item read-from-string last_reg buses_per_region 
+        let new_amount current_amount - 1
+        set buses_per_region replace-item read-from-string last_reg buses_per_region new_amount
+      ]
+      ; increases the region the bus is now going to
+      let current_amount_cur_reg item read-from-string cur_reg buses_per_region 
+      let new_amount_cur_reg current_amount_cur_reg + 1
+      set buses_per_region replace-item read-from-string cur_reg buses_per_region new_amount_cur_reg
+
     ]
   ]
+  set inbox_length length inbox
 end
 
 ; ------------------- choose direction functions --------------------------
 
 ; chooses a new region
 to choose-direction
-  ; choose the direction with most people waiting
-  let direction most-destination-region
+  ; gets the best direction according to the reward function 
+  let direction direction-reward-function
+  ; updates all the concerning variables
+  set bus_stop_list item direction (list west south east north)
+  set last_region current_region
   set current_region direction
-;  show direction
-
-  
-;  show "chosen region"
-;  show current_region
-  
-  if direction = 0 [
-    set bus_stop_list west
-  ]
-  if direction = 1 [
-    set bus_stop_list south
-  ]
-  if direction = 2 [
-    set bus_stop_list east
-  ]
-  if direction = 3 [
-    set bus_stop_list north
-  ]
-  ; resets the bus stop counter
   set bus_stop_counter 0
 end
 
-; report the region with the most people waiting  
+; report # of people waiting per region 
 to-report most-people-waiting
-
-  let best_region 0
-  let most_people 0
   let region_counter 0
-
   let region_list (list west south east north)
-
-
+  let waiting_per_region [0 0 0 0]
   foreach region_list [
     let amount 0
     let region ?
-
-  ; count the people waiting in this region
+    ; count the people waiting at every busstop in this region
     foreach region[
       set amount amount + length get-passengers-at-stop ?
     ]
-    if amount > most_people [
-      set most_people amount
-      set best_region region_counter
-    ]
-    
-    ;show "at busstop"
-    ;show region_counter
-    ;show "amount waiting"
-    ;show amount
-    
+    set waiting_per_region replace-item region_counter waiting_per_region amount 
     set region_counter region_counter + 1
   ]
-  report best_region
+  report waiting_per_region
 end
 
-; report the region with the most people traveling destinations
+; report # of people traveling destinations per region
 to-report most-destination-region
   let pass get-passengers-at-stop central_point
+  let region_list (list west south east north)
+  let amount_per_region (list 0 0 0 0)
   let amount_east 0  
   let amount_north 0
   let amount_west 0
   let amount_south 0
   foreach pass [
     let destination item 1 ?
+    foreach region_list [
     if member? destination east [
       set amount_east amount_east + 1
     ]
@@ -290,26 +290,7 @@ to-report most-destination-region
       set amount_south amount_south + 1
     ]
   ]
-  ; get the argmax of all the amounts of people going to a region
-  let highest -1
-  let most_destination_region "dummy"
-  let region 0
-  ; 0 = west, 1 = south, 2 = east, 3 = north
-  foreach (list amount_west amount_south amount_east amount_north) [
-    if highest < ? [
-      set highest ?
-      set most_destination_region region
-    ]
-  set region region + 1
-  
-;  show " amount in region"
-;  show ?
-;  show "highest"
-;  show highest
-;  show "most_destination_region"
-;  show most_destination_region
-  ]
-  report most_destination_region
+  report (list amount_west amount_south amount_east amount_north)
 end
 
 ; ------------------- add-bus functions --------------------------
@@ -336,12 +317,12 @@ to-report get-voting-outcome
   let treshold 0.5
   show "voting outcome"
   ifelse vote_outcome > treshold [
-    show vote_outcome
-    show "new bus"
+    ;show vote_outcome
+    ;show "new bus"
     report 1
   ] [ 
-  show vote_outcome
-  show "no new bus"
+  ;show vote_outcome
+  ;show "no new bus"
   report 0 
   ]
 
@@ -349,13 +330,13 @@ end
 
 to voting-to-add-bus
   ifelse wait_at_central = true [
-      show "first round, wait at central = true"
+      ;show "first round, wait at central = true"
       vote-for-new-bus
       set wait_at_central false
     ]
     ;ELSE if second tick bus needs to get voting outcome and choose direction
     [
-      show "SECOND round, wait at central = false"
+      ;show "SECOND round, wait at central = false"
       let lease_new_bus get-voting-outcome
       if lease_new_bus = 1 [
         add-bus 1
@@ -366,19 +347,19 @@ end
 
 ; asks all the buses to vote
 to vote-for-new-bus
-  show "voting.."
+  ;show "voting.."
   let counter number_of_buses
 
   let list_of_buses n-values number_of_buses [24 + ?]
-  show "list of buses"
-  show list_of_buses
+  ;show "list of buses"
+  ;show list_of_buses
   ;let bus_list n-values number_of_buses [24 + ?]
   
   foreach list_of_buses [
     let current_bus ?
     if current_bus != bus_id [
       send-message current_bus "vote"
-    show "sent message to vote"
+    ;show "sent message to vote"
     ]
   ]
 end
@@ -386,8 +367,8 @@ end
 to-report is-almost-full [bs_type]
   let max_passengers get-max-passengers bs_type
   let perc_full (length bus_passengers / max_passengers)
-  show "percentage full"
-  show perc_full
+  ;show "percentage full"
+  ;show perc_full
   ifelse perc_full >= 0.5 [
     report 1
   ] [
@@ -397,31 +378,53 @@ end
 
 ; ------------------- value functions --------------------------
 
-to-report reward-function [ bus_stop ] 
-  let reward 0
+; reports back the best direction according to the reward function with the designed weights
+to-report direction-reward-function
+  let reward_per_region [0 0 0 0]
   
-  ; calculate different features
-  let dist get-distance current_stop bus_stop
-  let no_of_people_waiting length get-passengers-at-stop bus_stop
-  let no_of_people_destination get-no-destinations bus_stop
+  let destinations most-destination-region
+  let people_waiting most-people-waiting
+  let w1 3 
+  let w2 1 ;there are much more people waiting in the whole region than only at the central point. The buses need to bring people fast, and the people waiting will be picked up anyway i guess.
+  let w3 20 ; a value around the capacity of 1 bus
+  let forloop n-values length reward_per_region [?]
+  foreach forloop [
+    let amount_with_destination item ? destinations
+    let passengers_waiting_in_region item ? people_waiting
+    let amount_of_buses_in_region item ? buses_per_region
+    ; reward function
+    let reward w1 * amount_with_destination + w2 * passengers_waiting_in_region - w3 * amount_of_buses_in_region
+    
+    set reward_per_region replace-item ? reward_per_region reward 
+  ]
+  let best_direction arg-max reward_per_region
+  ; some prints
+;  show "amount_with_destination"
+;  show destinations
+;  show "passengers_waiting_per_region"
+;  show people_waiting
+;  show "reward_per_region"
+;  show reward_per_region
   
-  ; calculate reward
-  set reward (- dist + no_of_people_waiting + no_of_people_destination)
-  
-  ;show "busstop"
-  ;show bus_stop
-  ;show "reward"
-  ;show reward
-   
-  report reward
+  report best_direction
 end
 
 
 ; ------------------- helper functions --------------------------
 
-; uses the leasing_list to see if new buses are added
-to update-nr-of-buses 
-  set number_of_buses number_of_buses + length leasing_list
+; returns the index of the highest number in a list
+to-report arg-max [list1]
+  let highest -100000
+  let index "dummy"
+  let iterator 0
+  foreach (list1) [
+    if highest < ? [
+      set highest ?
+      set index iterator
+    ]
+  set iterator iterator + 1
+  ]
+  report index
 end
 
 ; sets 'next' as the next stop in schedule
@@ -476,27 +479,49 @@ end
 
 
 
-; NOT USED
+; NOT USED --------
+
+;; uses the leasing_list to see if new buses are added
+;to update-nr-of-buses 
+;  ; works only when only 1 bus is added
+;  set number_of_buses number_of_buses + length leasing_list
+;end
+
 ; retrieve best next stop
-to-report best-busstop
-  let best_busstop 0
-  let highest_reward -1000
-  
-  ; index in for loop
-  let i 0
-  let reward 0
-  ; for each possible busstop calculate the rewardfunction
-  foreach item current_stop graph[
-    ; retrieve the busstop to be compared
-    let compared_busstop item i item current_stop graph
-    ; calculate the reward
-    set reward reward-function(compared_busstop)
-    if reward > highest_reward [
-      set highest_reward reward
-      set best_busstop compared_busstop
-    ]
-    set i i + 1
-  ]
-  report best_busstop
-  
-end
+;to-report best-busstop
+;  let best_busstop 0
+;  let highest_reward -1000
+;  
+;  ; index in for loop
+;  let i 0
+;  let reward 0
+;  ; for each possible busstop calculate the rewardfunction
+;  foreach item current_stop graph[
+;    ; retrieve the busstop to be compared
+;    let compared_busstop item i item current_stop graph
+;    ; calculate the reward
+;    set reward reward-function(compared_busstop)
+;    if reward > highest_reward [
+;      set highest_reward reward
+;      set best_busstop compared_busstop
+;    ]
+;    set i i + 1
+;  ]
+;  report best_busstop
+;  
+;end
+
+;to-report reward-function [ bus_stop ] 
+;  let reward 0
+;  
+;  ; calculate different features
+;  let dist get-distance current_stop bus_stop
+;  let no_of_people_waiting length get-passengers-at-stop bus_stop
+;  let no_of_people_destination get-no-destinations bus_stop
+;  
+;  ; calculate reward
+;  set reward (- dist + no_of_people_waiting + no_of_people_destination)
+;
+;   
+;  report reward
+;end
