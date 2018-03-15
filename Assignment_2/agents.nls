@@ -13,11 +13,7 @@ buses-own [
   previous_stop   ; ID of the last bus stop that the agent (bus) visited (-1 means that the agent has not visited any bus stop yet).
   current_stop    ; ID of the bus stop where the agent (bus) currently is (-1 means that the agent is not at any bus stop).
   next_stop       ; ID of the bus stop the agent (bus) is traveling to (-1 means that the agent is not travelling to any bus stop).
-
-  ; New local variables for students.
-  ; You can create any new local variable you want. Just declare them here.
   
-
   bus_stop_list ; list of bus stops where the bus will go
   bus_stop_counter   ; ID of where the bus currently is in its schedule
   next ; TODO might be unnecessary 
@@ -37,8 +33,6 @@ buses-own [
 globals [graph]
 
 to init-buses
-  ; Initialize your agents here.
-
   ; This list contains the topology of the entire network of bus stops, which is known to all agents. You can use this, for instance, to calculate the shortest path between two bus stops.
   set graph [[22 15 14] [11 19 23 7] [8] [16 4 20 9] [3 5 10] [4 16 10 17] [8] [1 17 13] [2 6 9] [3 8 20] [4 5 17 13 21] [1 16 17] [20 15 22] [7 10 22 23] [0 23] [0 12 18] [3 5 11] [5 7 10 11] [15] [1 23] [3 9 12 21] [10 20 22] [0 12 13 21] [1 13 14 19]]
   set west [4 5 16 11 17 10 4 3] ; centraal, dam, everts, sloter, lely, suri, leidse, dam, centraal
@@ -54,31 +48,27 @@ to init-buses
   set buses_per_region [0 0 0 0]
   set last_region 5 ; 5 is the default value if it doesn't have a region yet.
   set current_region 5
-  send-info-when-added
-               
+  send-info-when-added ; sends all buses that a new bus has been added             
 end
 
 ; ------------------- main functions --------------------------
 
+; gets executed each tick for every bus seperately
 to execute-actions
-  
   ; add starting buses
   if ticks = 10 [
     show "added one bus bc of 10 ticks" 
-    let busses n-values 40 [1]
+    let busses n-values 100 [1]
     foreach busses [
       add-bus 3
     ]
   ]
-  
   ; opens the inbox every tick and decides what to do based on the first word in the message
   open-inbox
-
   ; perform all actions that should be done when at a busstop
   if current_stop != -1 [
     at-busstop
   ]
-  
   ; travels to next busstop
   travel-to next
 end
@@ -270,27 +260,19 @@ to-report most-destination-region
   let pass get-passengers-at-stop central_point
   let region_list (list west south east north)
   let amount_per_region (list 0 0 0 0)
-  let amount_east 0  
-  let amount_north 0
-  let amount_west 0
-  let amount_south 0
   foreach pass [
     let destination item 1 ?
+    let region_counter 0
     foreach region_list [
-    if member? destination east [
-      set amount_east amount_east + 1
-    ]
-    if member? destination north [
-      set amount_north amount_north + 1
-    ]
-    if member? destination west [
-      set amount_west amount_west + 1
-    ]
-    if member? destination south [
-      set amount_south amount_south + 1
+      if member? destination ? [
+        let amount item region_counter amount_per_region
+        let new_amount amount + 1
+        set amount_per_region replace-item region_counter amount_per_region new_amount 
+      ]
+      set region_counter region_counter + 1
     ]
   ]
-  report (list amount_west amount_south amount_east amount_north)
+  report amount_per_region
 end
 
 ; ------------------- add-bus functions --------------------------
@@ -398,17 +380,8 @@ to-report direction-reward-function
     set reward_per_region replace-item ? reward_per_region reward 
   ]
   let best_direction arg-max reward_per_region
-  ; some prints
-;  show "amount_with_destination"
-;  show destinations
-;  show "passengers_waiting_per_region"
-;  show people_waiting
-;  show "reward_per_region"
-;  show reward_per_region
-  
   report best_direction
 end
-
 
 ; ------------------- helper functions --------------------------
 
@@ -446,19 +419,6 @@ to-report get-max-passengers [ bs_type ]
   ]
 end
 
-; TODO What does this function do?
-to-report get-no-destinations [ bus_stop ]
-  let counter 0
-  foreach bus_passengers [
-    if item 1 ? = bus_stop[
-      set counter counter + 1
-    ]
-  ]  
-  ;show "counter"
-  ;show bus_stop
-  ;show counter
-  report counter
-end  
 
 
 
@@ -486,6 +446,21 @@ end
 ;  ; works only when only 1 bus is added
 ;  set number_of_buses number_of_buses + length leasing_list
 ;end
+
+
+;; TODO What does this function do?
+;to-report get-no-destinations [ bus_stop ]
+;  let counter 0
+;  foreach bus_passengers [
+;    if item 1 ? = bus_stop[
+;      set counter counter + 1
+;    ]
+;  ]  
+;  ;show "counter"
+;  ;show bus_stop
+;  ;show counter
+;  report counter
+;end  
 
 ; retrieve best next stop
 ;to-report best-busstop
