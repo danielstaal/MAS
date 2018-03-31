@@ -317,7 +317,7 @@ end
 ; if amount_passengers_waiting is lower than threshold: set waiting true (because the gasoline costs are not worth the reward of diminishing average waiting time)
 to waiting-reward-function
   ; the threshold is dependent on the amount of buses, since with more buses it should be easier to wait
-  let reward_threshold 1 + number_of_buses * 5
+  let reward_threshold 1 + number_of_buses
   ifelse amount_passengers_waiting < reward_threshold [
     set waiting true 
   ]
